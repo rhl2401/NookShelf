@@ -7,6 +7,7 @@ import { WebhookFormDialog } from "@/components/settings/webhook-form-dialog";
 import { WebhookRowActions } from "@/components/settings/webhook-row-actions";
 import { EmailPrefToggle } from "@/components/settings/email-pref-toggle";
 import { getDefaultCurrency, currencyLabel } from "@/lib/currency";
+import { DataIoCard } from "@/components/settings/data-io-card";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -120,6 +121,8 @@ export default async function SettingsPage() {
               )}
             </CardContent>
           </Card>
+
+          <DataIoCard />
         </>
       )}
     </div>
