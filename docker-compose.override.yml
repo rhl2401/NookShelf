@@ -1,0 +1,17 @@
+# Auto-merged by `docker compose up` (standard Compose convention) — turns
+# the `app` service into a hot-reloading dev server with dev-login enabled.
+# Delete or rename this file for anything resembling a real deployment; the
+# base docker-compose.yml alone stays production-safe (NODE_ENV=production,
+# no dev-login, no source bind mount).
+services:
+  app:
+    build:
+      target: dev
+    environment:
+      NODE_ENV: development
+      AUTH_DEV_LOGIN: "true"
+    volumes:
+      - uploads:/app/uploads
+      - .:/app
+      - /app/node_modules
+      - /app/.next

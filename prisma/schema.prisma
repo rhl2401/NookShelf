@@ -1,0 +1,445 @@
+// Asset Management System — data model
+// See /Users/rasmuslauridsen/.claude/plans/help-me-refine-requirements-glimmering-nygaard.md for requirements.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Auth (NextAuth / Auth.js standard models)
+// ---------------------------------------------------------------------------
+
+// A User is purely a login credential holder (one per OAuth identity that has
+// signed in). The durable "who is this human" concept is Person, below —
+// a User is always linked to exactly one Person.
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  active        Boolean   @default(true)
+
+  accounts Account[]
+  sessions Session[]
+  person   Person?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Identity: Person is the durable "who" — assets, checkouts, and roles all
+// reference Person, never User directly, so a person created manually by an
+// admin behaves identically to one who has logged in via OAuth.
+// ---------------------------------------------------------------------------
+
+enum PersonStatus {
+  ACTIVE
+  INACTIVE
+  MERGED
+}
+
+model Person {
+  id     String       @id @default(cuid())
+  name   String
+  email  String?
+  status PersonStatus @default(ACTIVE)
+
+  emailNotificationsEnabled Boolean @default(true)
+
+  // Set once this Person has an associated login.
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Set when this Person record was merged into another (survivor) Person.
+  mergedIntoId String?
+  mergedInto   Person?  @relation("PersonMerge", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergedFrom   Person[] @relation("PersonMerge")
+
+  roles              RoleAssignment[]
+  assignedAssets     Asset[]           @relation("AssetAssignee")
+  checkoutsAsBorrower Checkout[]       @relation("CheckoutBorrower")
+  uploadedAttachments Attachment[]     @relation("AttachmentUploader")
+  auditLogEntries     AuditLogEntry[]  @relation("AuditActor")
+  notifications       Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+// ---------------------------------------------------------------------------
+// RBAC — permissions are a fixed catalog defined in code (see src/lib/permissions.ts);
+// a Role is just an admin-managed named set of those permission keys.
+// ---------------------------------------------------------------------------
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false) // seeded default roles (Admin/Member/Viewer) can't be deleted
+  permissions String[]
+
+  assignments RoleAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RoleAssignment {
+  id       String @id @default(cuid())
+  personId String
+  roleId   String
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([personId, roleId])
+}
+
+// ---------------------------------------------------------------------------
+// Locations — self-referencing tree, unlimited depth.
+// ---------------------------------------------------------------------------
+
+model Location {
+  id       String  @id @default(cuid())
+  name     String
+  parentId String?
+  parent   Location? @relation("LocationTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children Location[] @relation("LocationTree")
+
+  notes  String?
+  assets Asset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+}
+
+// ---------------------------------------------------------------------------
+// Asset Types — define the custom-field schema each Asset of that type carries.
+// Cable ships as a seeded built-in AssetType using this same mechanism.
+// ---------------------------------------------------------------------------
+
+model AssetType {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  category    String?
+  icon        String?
+  isBuiltIn   Boolean @default(false)
+  // Array of { key, label, type, required, options?, unit? } — see src/lib/asset-fields.ts
+  fieldSchema Json    @default("[]")
+
+  assets Asset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Assets — the core entity. Cable-specific attributes live in customFields,
+// validated against the Cable AssetType's fieldSchema.
+// ---------------------------------------------------------------------------
+
+enum AssetStatus {
+  IN_USE
+  IN_STORAGE
+  CHECKED_OUT
+  RETIRED
+  LOST
+  DISPOSED
+}
+
+model Asset {
+  id       String @id @default(cuid())
+  assetTag String @unique // human-readable unique asset id, e.g. AM-000123, encoded in the QR code
+
+  name        String
+  status      AssetStatus @default(IN_STORAGE)
+  notes       String?
+
+  assetTypeId String
+  assetType   AssetType @relation(fields: [assetTypeId], references: [id], onDelete: Restrict)
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  assignedToId String?
+  assignedTo   Person? @relation("AssetAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  parentAssetId String?
+  parentAsset   Asset?  @relation("AssetComposition", fields: [parentAssetId], references: [id], onDelete: SetNull)
+  childAssets   Asset[] @relation("AssetComposition")
+
+  customFields Json @default("{}")
+
+  // Basic lifecycle
+  purchaseDate      DateTime?
+  purchasePrice     Decimal?  @db.Decimal(12, 2)
+  purchaseCurrency  String? // ISO 4217 code, e.g. "USD" — the currency the price was actually paid in
+  vendor            String?
+  warrantyExpiresAt DateTime?
+
+  tags        AssetTag[]
+  attachments Attachment[]
+  kitMembers  KitMember[]
+  checkouts   Checkout[]
+  checkoutItems CheckoutItem[]
+  auditLogEntries AuditLogEntry[] @relation("AuditAsset")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([assetTypeId])
+  @@index([locationId])
+  @@index([assignedToId])
+  @@index([parentAssetId])
+}
+
+model Tag {
+  id    String     @id @default(cuid())
+  name  String     @unique
+  assets AssetTag[]
+}
+
+model AssetTag {
+  assetId String
+  tagId   String
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([assetId, tagId])
+}
+
+model Attachment {
+  id           String  @id @default(cuid())
+  assetId      String
+  asset        Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  kind         String  @default("file") // "photo" | "document" | "file"
+  path         String  // relative path under the uploads volume
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+
+  uploadedById String?
+  uploadedBy   Person? @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([assetId])
+}
+
+// ---------------------------------------------------------------------------
+// Kits — reusable named bundles of assets, and the unified Checkout system
+// that can target either a single Asset or a Kit.
+// ---------------------------------------------------------------------------
+
+model Kit {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+
+  members   KitMember[]
+  checkouts Checkout[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model KitMember {
+  kitId   String
+  assetId String
+
+  kit   Kit   @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  addedAt DateTime @default(now())
+
+  @@id([kitId, assetId])
+}
+
+enum CheckoutKind {
+  ASSET
+  KIT
+}
+
+enum CheckoutStatus {
+  OUT
+  RETURNED
+}
+
+model Checkout {
+  id   String       @id @default(cuid())
+  kind CheckoutKind
+
+  assetId String?
+  asset   Asset?  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  kitId String?
+  kit   Kit?   @relation(fields: [kitId], references: [id], onDelete: Cascade)
+
+  borrowerId String
+  borrower   Person @relation("CheckoutBorrower", fields: [borrowerId], references: [id], onDelete: Restrict)
+
+  status       CheckoutStatus @default(OUT)
+  checkedOutAt DateTime       @default(now())
+  dueAt        DateTime
+  returnedAt   DateTime?
+  notes        String?
+
+  items CheckoutItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([borrowerId])
+  @@index([assetId])
+  @@index([kitId])
+  @@index([status, dueAt])
+}
+
+// One row per asset actually covered by a checkout (populated at checkout time
+// from the kit's current membership, or a single row for an asset checkout) —
+// lets a kit return flag individual items as missing/damaged.
+model CheckoutItem {
+  id         String   @id @default(cuid())
+  checkoutId String
+  checkout   Checkout @relation(fields: [checkoutId], references: [id], onDelete: Cascade)
+  assetId    String
+  asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  returnedAt DateTime?
+  isMissing  Boolean   @default(false)
+  isDamaged  Boolean   @default(false)
+  conditionNote String?
+
+  @@unique([checkoutId, assetId])
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+enum NotificationType {
+  WARRANTY_EXPIRING
+  CHECKOUT_DUE_SOON
+  CHECKOUT_OVERDUE
+  MERGE_PERFORMED
+  GENERIC
+}
+
+model Notification {
+  id       String            @id @default(cuid())
+  personId String
+  person   Person            @relation(fields: [personId], references: [id], onDelete: Cascade)
+  type     NotificationType
+  title    String
+  body     String?
+  link     String?
+  isRead   Boolean           @default(false)
+
+  // Set to e.g. "warranty:<assetId>" or "checkout-overdue:<checkoutId>" so the
+  // scheduler can avoid creating the same alert on every run.
+  dedupeKey String? @unique
+
+  createdAt DateTime @default(now())
+
+  @@index([personId, isRead])
+}
+
+model WebhookEndpoint {
+  id      String   @id @default(cuid())
+  url     String
+  secret  String?
+  events  String[] // subset of NotificationType values, or "*"
+  enabled Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Audit log — append-only.
+// ---------------------------------------------------------------------------
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  MOVE
+  ASSIGN
+  CHECKOUT
+  CHECKIN
+  MERGE
+  STATUS_CHANGE
+}
+
+model AuditLogEntry {
+  id         String      @id @default(cuid())
+  entityType String // "Asset" | "Location" | "Kit" | "Checkout" | "Person" | "Role" | ...
+  entityId   String
+  action     AuditAction
+
+  actorId String?
+  actor   Person? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  // Convenience relation for fast "history for this asset" queries; null for
+  // audit entries on non-asset entities.
+  assetId String?
+  asset   Asset?  @relation("AuditAsset", fields: [assetId], references: [id], onDelete: Cascade)
+
+  before Json?
+  after  Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([assetId])
+}
