@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Asset Management
 
-## Getting Started
+Self-hosted asset tracking for home and small-team use — locations, asset types with custom
+fields (cables included), kits, checkout/return, QR labeling, and notifications. See
+`AGENTS.md`/the requirements doc for the full feature list.
 
-First, run the development server:
+## Stack
+
+TypeScript, Next.js (App Router), PostgreSQL via Prisma 7 (`@prisma/adapter-pg`), Auth.js v5
+(OAuth-only — Google, Microsoft, or any generic OIDC provider), Tailwind + shadcn/ui (Base UI).
+
+## Running with Docker (recommended)
+
+1. Copy `.env.example` to `.env` and fill in at least `AUTH_SECRET` (generate one with
+   `openssl rand -base64 32`) and one OAuth provider's credentials.
+2. `docker compose up -d --build`
+3. Open http://localhost:3000 — the first person to sign in becomes Admin automatically.
+
+The `app` container runs `prisma migrate deploy` and seeds default roles/asset types on every
+start (both are idempotent), then starts the server. Uploaded files persist in the `uploads`
+Docker volume; the database persists in `db_data`.
+
+## Local development (without Docker for the app)
 
 ```bash
+docker compose up -d db      # just Postgres
+npm install
+npm run db:migrate           # applies migrations, prompts for a name on schema changes
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Configuring OAuth
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Set whichever of these you use in `.env` (leave the others blank — the login page only shows
+providers with credentials configured):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Google** — `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
+- **Microsoft (Entra ID)** — `AUTH_MICROSOFT_ENTRA_ID_ID`, `AUTH_MICROSOFT_ENTRA_ID_SECRET`,
+  `AUTH_MICROSOFT_ENTRA_ID_ISSUER`
+- **Any other OIDC provider** — `AUTH_GENERIC_OIDC_ID`, `AUTH_GENERIC_OIDC_SECRET`,
+  `AUTH_GENERIC_OIDC_ISSUER`, `AUTH_GENERIC_OIDC_NAME`
 
-## Learn More
+Redirect URI for all providers: `<NEXTAUTH_URL>/api/auth/callback/<provider>` (e.g.
+`http://localhost:3000/api/auth/callback/google`).
 
-To learn more about Next.js, take a look at the following resources:
+## Currency
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Purchase prices can be entered in whatever currency an item was actually bought in. Set
+`DEFAULT_CURRENCY` (defaults to `EUR`) to the currency everything gets converted to for display —
+conversion uses live rates from the free frankfurter.app API, cached for 12 hours, and degrades
+gracefully (shows the original amount only) if the deployment has no outbound internet access.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Data import / export
 
-## Deploy on Vercel
+Settings → Import / export (requires the `settings:manage` permission) can back up or bulk-edit
+locations, asset types, assets, and kits — not people, roles, or checkout history — in JSON, a
+CSV zip (one file per entity), or Excel (.xlsx, one sheet per entity). Matches existing records by
+name/asset tag, so re-importing the same file is safe and idempotent. Download the example file in
+any format from the same page to see the exact structure expected.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notable commands
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm run build` / `npm run dev` / `npm run start`
+- `npm run db:migrate` — create + apply a migration from schema changes (interactive)
+- `npm run db:deploy` — apply existing migrations non-interactively (what Docker uses)
+- `npm run db:seed` — seed default roles + built-in asset types (Cable, Generic)
+
+## Known simplifications (v1)
+
+- OAuth provider config is env-var based, not DB/admin-editable.
+- No depreciation/maintenance scheduling — only purchase info + warranty-expiry alerts.
+- Person merges are audit-logged but not one-click reversible.
+- Attachments are stored on local disk (the `uploads` volume), not object storage.
