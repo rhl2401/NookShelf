@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requirePermission, requireSession } from "@/lib/auth-helpers";
 import { writeAudit } from "@/lib/audit";
-import { processPictureUpload, AVATAR_SIZE } from "@/lib/image-processing";
+import { processImageUpload, AVATAR_SIZE } from "@/lib/image-processing";
 import { saveAvatarFile, deleteStoredFile } from "@/lib/storage";
 
 const MAX_AVATAR_BYTES = 20 * 1024 * 1024;
@@ -26,7 +26,7 @@ export async function uploadAvatar(personId: string, formData: FormData) {
 
   const before = await prisma.person.findUniqueOrThrow({ where: { id: personId } });
   const input = Buffer.from(await file.arrayBuffer());
-  const { buffer } = await processPictureUpload(input, AVATAR_SIZE);
+  const { buffer } = await processImageUpload(input, AVATAR_SIZE);
   const relativePath = await saveAvatarFile(buffer);
 
   await prisma.person.update({

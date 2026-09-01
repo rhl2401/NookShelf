@@ -30,7 +30,11 @@ export function PictureRow({
             className="aspect-square overflow-hidden rounded-lg bg-muted ring-offset-1 ring-offset-background hover:ring-2 hover:ring-ring"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/api/pictures/${p.id}`} alt={p.name ?? ""} className="size-full object-cover" />
+            <img
+              src={`/api/pictures/${p.id}?size=thumb`}
+              alt={p.name ?? ""}
+              className="size-full object-cover"
+            />
           </button>
         ))}
       </div>

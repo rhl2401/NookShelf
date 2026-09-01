@@ -11,10 +11,12 @@ export function AvatarUploader({
   personId,
   name,
   hasAvatar,
+  oauthImage,
 }: {
   personId: string;
   name: string;
   hasAvatar: boolean;
+  oauthImage?: string | null;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -64,7 +66,10 @@ export function AvatarUploader({
   return (
     <div className="flex items-center gap-4">
       <Avatar size="lg" className="size-16">
-        {hasAvatar && <AvatarImage src={`/api/avatars/${personId}`} alt={name} />}
+        <AvatarImage
+          src={hasAvatar ? `/api/avatars/${personId}` : (oauthImage ?? undefined)}
+          alt={name}
+        />
         <AvatarFallback className="text-base">{initials}</AvatarFallback>
       </Avatar>
       <div className="flex items-center gap-2">

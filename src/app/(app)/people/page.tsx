@@ -58,9 +58,14 @@ export default async function PeoplePage() {
             <Card key={person.id}>
               <CardContent className="flex items-center gap-4">
                 <Avatar size="lg">
-                  {person.avatarPath && (
-                    <AvatarImage src={`/api/avatars/${person.id}`} alt={person.name} />
-                  )}
+                  <AvatarImage
+                    src={
+                      person.avatarPath
+                        ? `/api/avatars/${person.id}`
+                        : (person.user?.image ?? undefined)
+                    }
+                    alt={person.name}
+                  />
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-1 items-center justify-between gap-4">

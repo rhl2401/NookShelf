@@ -315,10 +315,17 @@ model Picture {
   scope     PictureScope @default(PERSONAL)
   ownerId   String?
   owner     Person?      @relation("PictureOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  path      String // relative path under the uploads volume — always a square .webp
+  path      String // relative path under the uploads volume — square .webp at the workspace's configured size
   sizeBytes Int
   width     Int
   height    Int
+
+  // A fixed 64×64 companion generated alongside `path` for lists/thumbnails,
+  // so small displays don't pay for downloading the full-size image.
+  // Nullable only because pictures created before this field existed have
+  // none — the serving route falls back to `path` for those.
+  thumbPath      String?
+  thumbSizeBytes Int?
 
   assets     Asset[]
   assetTypes AssetType[]
@@ -328,6 +335,13 @@ model Picture {
 
   @@index([ownerId])
   @@index([scope])
+}
+
+// Single-row app-wide configuration. Looked up by the fixed id "singleton".
+model WorkspaceSettings {
+  id          String   @id @default("singleton")
+  pictureSize Int      @default(512) // one of PICTURE_SIZE_OPTIONS — see src/lib/image-processing.ts
+  updatedAt   DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------

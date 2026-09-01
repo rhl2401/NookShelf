@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth-helpers";
 import { processPictureUpload } from "@/lib/image-processing";
 import { savePictureFile, deleteStoredFile } from "@/lib/storage";
+import { getWorkspacePictureSize } from "@/lib/actions/workspace-settings";
 
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
@@ -17,9 +18,13 @@ export async function uploadPicture(formData: FormData, scope: "PERSONAL" | "WOR
   if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
   if (file.size > MAX_UPLOAD_BYTES) throw new Error("File is too large (max 20MB).");
 
+  const size = await getWorkspacePictureSize();
   const input = Buffer.from(await file.arrayBuffer());
-  const { buffer, width, height } = await processPictureUpload(input);
-  const relativePath = await savePictureFile(buffer);
+  const { main, thumb } = await processPictureUpload(input, size);
+  const [relativePath, thumbRelativePath] = await Promise.all([
+    savePictureFile(main.buffer),
+    savePictureFile(thumb.buffer),
+  ]);
   const defaultName = file.name.replace(/\.[^./]+$/, "").trim().slice(0, 80) || null;
 
   const picture = await prisma.picture.create({
@@ -28,9 +33,11 @@ export async function uploadPicture(formData: FormData, scope: "PERSONAL" | "WOR
       scope,
       ownerId: session.user.personId,
       path: relativePath,
-      sizeBytes: buffer.byteLength,
-      width,
-      height,
+      sizeBytes: main.buffer.byteLength,
+      width: main.width,
+      height: main.height,
+      thumbPath: thumbRelativePath,
+      thumbSizeBytes: thumb.buffer.byteLength,
     },
   });
 
@@ -69,6 +76,7 @@ export async function deletePicture(pictureId: string) {
 
   await prisma.picture.delete({ where: { id: pictureId } });
   await deleteStoredFile(picture.path);
+  if (picture.thumbPath) await deleteStoredFile(picture.thumbPath);
 
   revalidatePath("/pictures");
   revalidatePath("/assets");
@@ -153,7 +161,12 @@ export async function flushUnusedPictures() {
   });
 
   await prisma.picture.deleteMany({ where: { id: { in: unused.map((p) => p.id) } } });
-  await Promise.all(unused.map((p) => deleteStoredFile(p.path)));
+  await Promise.all(
+    unused.flatMap((p) => [
+      deleteStoredFile(p.path),
+      ...(p.thumbPath ? [deleteStoredFile(p.thumbPath)] : []),
+    ]),
+  );
 
   revalidatePath("/pictures");
   return unused.length;

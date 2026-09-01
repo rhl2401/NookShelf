@@ -260,7 +260,7 @@ function PictureCard({
       <div className="aspect-square overflow-hidden rounded-xl bg-muted">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`/api/pictures/${picture.id}`}
+          src={`/api/pictures/${picture.id}?size=thumb`}
           alt={picture.name ?? ""}
           className="size-full object-cover"
         />

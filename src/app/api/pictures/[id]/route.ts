@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { resolveStoredFilePath } from "@/lib/storage";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await auth();
@@ -16,7 +16,11 @@ export async function GET(
   const picture = await prisma.picture.findUnique({ where: { id } });
   if (!picture) return new Response("Not found", { status: 404 });
 
-  const buffer = await readFile(resolveStoredFilePath(picture.path));
+  const wantsThumb = new URL(req.url).searchParams.get("size") === "thumb";
+  // Older pictures predate the thumb field — fall back to the full size for those.
+  const relativePath = wantsThumb && picture.thumbPath ? picture.thumbPath : picture.path;
+
+  const buffer = await readFile(resolveStoredFilePath(relativePath));
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "image/webp",

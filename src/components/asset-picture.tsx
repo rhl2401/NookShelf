@@ -35,7 +35,7 @@ export function AssetPicture({
         {/* Keyed by pictureId so switching pictures mounts a fresh frame — an
             <img> whose src merely changes keeps showing the old bitmap until
             the new one decodes, which reads as "nothing happened". */}
-        <PictureFrame key={pictureId} pictureId={pictureId} alt={alt} />
+        <PictureFrame key={pictureId} pictureId={pictureId} alt={alt} thumb={size !== "xl"} />
       </div>
     );
   }
@@ -50,7 +50,15 @@ export function AssetPicture({
   );
 }
 
-function PictureFrame({ pictureId, alt }: { pictureId: string; alt: string }) {
+function PictureFrame({
+  pictureId,
+  alt,
+  thumb,
+}: {
+  pictureId: string;
+  alt: string;
+  thumb: boolean;
+}) {
   const [loaded, setLoaded] = useState(false);
 
   return (
@@ -58,7 +66,7 @@ function PictureFrame({ pictureId, alt }: { pictureId: string; alt: string }) {
       {!loaded && <div className="absolute inset-0 animate-pulse bg-muted-foreground/15" />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={`/api/pictures/${pictureId}`}
+        src={`/api/pictures/${pictureId}${thumb ? "?size=thumb" : ""}`}
         alt={alt}
         className={cn(
           "size-full object-cover transition-opacity duration-150",
