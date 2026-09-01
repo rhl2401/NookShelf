@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DialogTriggerButton } from "@/components/dialog-trigger-button";
+import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
+import type { PictureRef } from "@/components/pictures/picture-row";
 import { createLocation, updateLocation } from "@/lib/actions/locations";
 
 export type FlatLocationOption = { id: string; label: string };
@@ -32,17 +34,34 @@ export function LocationFormDialog({
   flatLocations,
   location,
   defaultParentId,
+  myPictures,
+  workspacePictures,
 }: {
   trigger: React.ReactElement;
   flatLocations: FlatLocationOption[];
-  location?: { id: string; name: string; parentId: string | null; notes: string | null };
+  location?: {
+    id: string;
+    name: string;
+    parentId: string | null;
+    code: string | null;
+    icon: string | null;
+    iconColor: string | null;
+    primaryPictureId: string | null;
+    notes: string | null;
+  };
   defaultParentId?: string | null;
+  myPictures: PictureRef[];
+  workspacePictures: PictureRef[];
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(location?.name ?? "");
   const [parentId, setParentId] = useState<string>(
     location?.parentId ?? defaultParentId ?? "none",
   );
+  const [code, setCode] = useState(location?.code ?? "");
+  const [icon, setIcon] = useState<string | null>(location?.icon ?? null);
+  const [iconColor, setIconColor] = useState<string | null>(location?.iconColor ?? null);
+  const [pictureId, setPictureId] = useState<string | null>(location?.primaryPictureId ?? null);
   const [notes, setNotes] = useState(location?.notes ?? "");
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -51,10 +70,19 @@ export function LocationFormDialog({
     startTransition(async () => {
       try {
         const parsedParentId = parentId === "none" ? null : parentId;
+        const payload = {
+          name,
+          parentId: parsedParentId,
+          code: code.trim() || null,
+          icon,
+          iconColor,
+          primaryPictureId: pictureId,
+          notes,
+        };
         if (location?.id) {
-          await updateLocation(location.id, { name, parentId: parsedParentId, notes });
+          await updateLocation(location.id, payload);
         } else {
-          await createLocation({ name, parentId: parsedParentId, notes });
+          await createLocation(payload);
         }
         toast.success(location?.id ? "Location updated" : "Location created");
         setOpen(false);
@@ -74,9 +102,35 @@ export function LocationFormDialog({
           <DialogDescription>Locations can be nested to any depth.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="location-name">Name</Label>
+              <Input id="location-name" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="location-code">Label / ID</Label>
+              <Input
+                id="location-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="auto-generated if left blank"
+                className="font-mono"
+              />
+            </div>
+          </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="location-name">Name</Label>
-            <Input id="location-name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Label>Icon / picture</Label>
+            <PictureIconEditor
+              name={name || "Location"}
+              icon={icon}
+              onIconChange={setIcon}
+              color={iconColor}
+              onColorChange={setIconColor}
+              pictureId={pictureId}
+              onPictureChange={setPictureId}
+              myPictures={myPictures}
+              workspacePictures={workspacePictures}
+            />
           </div>
           <div className="grid gap-1.5">
             <Label>Parent location</Label>

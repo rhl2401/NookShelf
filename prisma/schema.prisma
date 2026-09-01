@@ -159,6 +159,15 @@ model Location {
   parent   Location? @relation("LocationTree", fields: [parentId], references: [id], onDelete: Restrict)
   children Location[] @relation("LocationTree")
 
+  // Short human-assignable label/ID for physical labeling (e.g. a shelf sticker) —
+  // unlike Asset.assetTag, this is user-editable, not an immutable generated identity.
+  code String? @unique
+
+  icon             String?
+  iconColor        String? // key into the icon color palette — see src/lib/icon-colors.ts
+  primaryPictureId String?
+  primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
+
   notes  String?
   assets Asset[]
 
@@ -330,6 +339,7 @@ model Picture {
   assets     Asset[]
   assetTypes AssetType[]
   kits       Kit[]
+  locations  Location[]
 
   createdAt DateTime @default(now())
 

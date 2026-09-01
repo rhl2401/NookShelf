@@ -5,6 +5,11 @@ export type LocationTreeNode = {
   id: string;
   name: string;
   parentId: string | null;
+  code: string | null;
+  icon: string | null;
+  iconColor: string | null;
+  primaryPictureId: string | null;
+  notes: string | null;
   directAssetCount: number;
   totalAssetCount: number;
   children: LocationTreeNode[];
@@ -23,6 +28,11 @@ export async function buildLocationTree(): Promise<LocationTreeNode[]> {
       id: loc.id,
       name: loc.name,
       parentId: loc.parentId,
+      code: loc.code,
+      icon: loc.icon,
+      iconColor: loc.iconColor,
+      primaryPictureId: loc.primaryPictureId,
+      notes: loc.notes,
       directAssetCount: loc._count.assets,
       totalAssetCount: loc._count.assets,
       children: [],

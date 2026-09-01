@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LocationTree } from "@/components/locations/location-tree";
@@ -10,7 +11,23 @@ export default async function LocationsPage() {
   const session = await auth();
   const canManage = Boolean(session?.user.permissions.includes("location:manage"));
 
-  const tree = await buildLocationTree();
+  const [tree, myPictures, workspacePictures] = await Promise.all([
+    buildLocationTree(),
+    session?.user.personId
+      ? prisma.picture.findMany({
+          where: { scope: "PERSONAL", ownerId: session.user.personId },
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+    prisma.picture.findMany({
+      where: { scope: "WORKSPACE" },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: { id: true, name: true },
+    }),
+  ]);
   const flatLocations = flattenLocationTree(tree);
 
   return (
@@ -30,13 +47,21 @@ export default async function LocationsPage() {
               </Button>
             }
             flatLocations={flatLocations}
+            myPictures={myPictures}
+            workspacePictures={workspacePictures}
           />
         )}
       </div>
 
       <Card>
         <CardContent>
-          <LocationTree nodes={tree} flatLocations={flatLocations} canManage={canManage} />
+          <LocationTree
+            nodes={tree}
+            flatLocations={flatLocations}
+            canManage={canManage}
+            myPictures={myPictures}
+            workspacePictures={workspacePictures}
+          />
         </CardContent>
       </Card>
     </div>

@@ -6,10 +6,15 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth-helpers";
 import { writeAudit } from "@/lib/audit";
 import { isAncestorOrSelf } from "@/lib/locations";
+import { generateLocationCode } from "@/lib/location-code";
 
 const locationSchema = z.object({
   name: z.string().min(1).max(120),
   parentId: z.string().nullable().optional(),
+  code: z.string().max(40).nullable().optional(),
+  icon: z.string().nullable().optional(),
+  iconColor: z.string().nullable().optional(),
+  primaryPictureId: z.string().nullable().optional(),
   notes: z.string().max(2000).optional(),
 });
 
@@ -18,7 +23,15 @@ export async function createLocation(input: z.infer<typeof locationSchema>) {
   const data = locationSchema.parse(input);
 
   const location = await prisma.location.create({
-    data: { name: data.name, parentId: data.parentId || null, notes: data.notes || null },
+    data: {
+      name: data.name,
+      parentId: data.parentId || null,
+      code: data.code?.trim() || generateLocationCode(),
+      icon: data.icon || null,
+      iconColor: data.iconColor || null,
+      primaryPictureId: data.primaryPictureId || null,
+      notes: data.notes || null,
+    },
   });
 
   await writeAudit({
@@ -52,6 +65,11 @@ export async function updateLocation(
     data: {
       name: data.name,
       parentId: data.parentId === undefined ? undefined : data.parentId || null,
+      code: data.code === undefined ? undefined : data.code?.trim() || null,
+      icon: data.icon === undefined ? undefined : data.icon || null,
+      iconColor: data.iconColor === undefined ? undefined : data.iconColor || null,
+      primaryPictureId:
+        data.primaryPictureId === undefined ? undefined : data.primaryPictureId || null,
       notes: data.notes,
     },
   });
