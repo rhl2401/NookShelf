@@ -19,6 +19,21 @@ export type AssetFieldDef = {
   unitOptions?: string[]; // selectable units, e.g. ["m", "ft"]
 };
 
+/** Validates one AssetFieldDef — shared by asset-type CRUD and template import. */
+export const fieldDefSchema = z.object({
+  key: z
+    .string()
+    .min(1)
+    .max(60)
+    .regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, "Use letters, numbers, and underscores, starting with a letter."),
+  label: z.string().min(1).max(80),
+  type: z.enum(["TEXT", "NUMBER", "BOOLEAN", "DATE", "SELECT", "MULTISELECT", "UNIT_NUMBER"]),
+  required: z.boolean().optional(),
+  options: z.array(z.string()).optional(),
+  unit: z.string().max(20).optional(),
+  unitOptions: z.array(z.string()).optional(),
+});
+
 export const CABLE_FIELD_SCHEMA: AssetFieldDef[] = [
   {
     key: "category",
@@ -92,6 +107,48 @@ export const CABLE_FIELD_SCHEMA: AssetFieldDef[] = [
     unit: "W",
   },
   { key: "color", label: "Color", type: "TEXT" },
+];
+
+export const VEHICLE_FIELD_SCHEMA: AssetFieldDef[] = [
+  { key: "make", label: "Make", type: "TEXT", required: true },
+  { key: "model", label: "Model", type: "TEXT", required: true },
+  { key: "year", label: "Year", type: "NUMBER" },
+  { key: "vin", label: "VIN", type: "TEXT" },
+  { key: "licensePlate", label: "License plate", type: "TEXT" },
+  {
+    key: "mileage",
+    label: "Mileage",
+    type: "UNIT_NUMBER",
+    unit: "km",
+    unitOptions: ["km", "mi"],
+  },
+  {
+    key: "fuelType",
+    label: "Fuel type",
+    type: "SELECT",
+    options: ["Petrol", "Diesel", "Electric", "Hybrid", "Other"],
+  },
+  { key: "registrationExpiresAt", label: "Registration expires", type: "DATE" },
+  { key: "insuranceExpiresAt", label: "Insurance expires", type: "DATE" },
+];
+
+export const BATTERY_FIELD_SCHEMA: AssetFieldDef[] = [
+  {
+    key: "chemistry",
+    label: "Chemistry",
+    type: "SELECT",
+    options: ["Li-ion", "LiPo", "NiMH", "NiCd", "Alkaline", "Lead-acid", "Other"],
+  },
+  {
+    key: "capacity",
+    label: "Capacity",
+    type: "UNIT_NUMBER",
+    unit: "mAh",
+    unitOptions: ["mAh", "Ah", "Wh"],
+  },
+  { key: "voltage", label: "Voltage", type: "UNIT_NUMBER", unit: "V" },
+  { key: "rechargeable", label: "Rechargeable", type: "BOOLEAN" },
+  { key: "cycleCount", label: "Cycle count", type: "NUMBER" },
 ];
 
 /** Validates a custom-fields payload against an AssetType's field schema, returning the cleaned object. */

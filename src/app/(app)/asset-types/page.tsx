@@ -2,13 +2,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { AssetTypeFormDialog } from "@/components/asset-types/asset-type-form-dialog";
-import { DeleteAssetTypeButton } from "@/components/asset-types/delete-asset-type-button";
-import { AssetPicture } from "@/components/asset-picture";
-import type { AssetFieldDef } from "@/lib/asset-fields";
-import { Plus } from "lucide-react";
+import { ImportTemplateDialog } from "@/components/asset-types/import-template-dialog";
+import { AssetTypesList } from "@/components/asset-types/asset-types-list";
+import { Plus, Upload } from "lucide-react";
 
 export default async function AssetTypesPage() {
   const session = await auth();
@@ -44,68 +41,31 @@ export default async function AssetTypesPage() {
             Define the custom fields each kind of asset carries — from vehicles to cables.
           </p>
         </div>
-        <AssetTypeFormDialog
-          trigger={
-            <Button>
-              <Plus /> New asset type
-            </Button>
-          }
-          myPictures={myPictures}
-          workspacePictures={workspacePictures}
-        />
+        <div className="flex gap-2">
+          <ImportTemplateDialog
+            trigger={
+              <Button variant="outline">
+                <Upload /> Import template
+              </Button>
+            }
+          />
+          <AssetTypeFormDialog
+            trigger={
+              <Button>
+                <Plus /> New asset type
+              </Button>
+            }
+            myPictures={myPictures}
+            workspacePictures={workspacePictures}
+          />
+        </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {assetTypes.map((assetType) => {
-          const fields = (assetType.fieldSchema as AssetFieldDef[]) ?? [];
-          return (
-            <Card key={assetType.id}>
-              <CardContent className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <AssetPicture
-                    pictureId={assetType.primaryPictureId}
-                    icon={assetType.icon}
-                    color={assetType.iconColor}
-                    alt={assetType.name}
-                    size="lg"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{assetType.name}</p>
-                      {assetType.isBuiltIn && <Badge variant="outline">Built-in</Badge>}
-                      {assetType.category && (
-                        <Badge variant="secondary">{assetType.category}</Badge>
-                      )}
-                      <Badge variant="outline">{assetType._count.assets} assets</Badge>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {fields.map((f) => (
-                        <Badge key={f.key} variant="outline" className="font-mono text-[10px]">
-                          {f.label}
-                        </Badge>
-                      ))}
-                      {fields.length === 0 && (
-                        <span className="text-xs text-muted-foreground">No custom fields</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <AssetTypeFormDialog
-                    assetType={assetType}
-                    trigger={<Button variant="outline">Edit</Button>}
-                    myPictures={myPictures}
-                    workspacePictures={workspacePictures}
-                  />
-                  {!assetType.isBuiltIn && (
-                    <DeleteAssetTypeButton assetTypeId={assetType.id} />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      <AssetTypesList
+        assetTypes={assetTypes}
+        myPictures={myPictures}
+        workspacePictures={workspacePictures}
+      />
     </div>
   );
 }

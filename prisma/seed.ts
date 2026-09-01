@@ -2,7 +2,6 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { DEFAULT_ROLES } from "../src/lib/permissions";
-import { CABLE_FIELD_SCHEMA } from "../src/lib/asset-fields";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -22,17 +21,8 @@ async function main() {
   }
   console.log(`Seeded ${DEFAULT_ROLES.length} default roles.`);
 
-  await prisma.assetType.upsert({
-    where: { name: "Cable" },
-    update: { fieldSchema: CABLE_FIELD_SCHEMA },
-    create: {
-      name: "Cable",
-      category: "Cables",
-      isBuiltIn: true,
-      fieldSchema: CABLE_FIELD_SCHEMA,
-    },
-  });
-
+  // Cable is no longer auto-seeded — it's offered as a starter template
+  // (src/lib/asset-type-templates.ts) admins can import from Asset Types.
   await prisma.assetType.upsert({
     where: { name: "Generic" },
     update: {},
@@ -43,7 +33,7 @@ async function main() {
       fieldSchema: [],
     },
   });
-  console.log("Seeded built-in asset types (Cable, Generic).");
+  console.log("Seeded built-in asset type (Generic).");
 }
 
 main()
