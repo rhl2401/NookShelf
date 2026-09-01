@@ -116,7 +116,7 @@ export function AssetsTable({
           <span className="px-1 font-medium">{selected.size} selected</span>
 
           <Select<string>
-            value={pendingLocation}
+            value={pendingLocation ?? ""}
             onValueChange={(v) => setPendingLocation(v ?? undefined)}
           >
             <SelectTrigger className="w-44">
@@ -139,7 +139,7 @@ export function AssetsTable({
           </Select>
 
           <Select<string>
-            value={pendingAssignee}
+            value={pendingAssignee ?? ""}
             onValueChange={(v) => setPendingAssignee(v ?? undefined)}
           >
             <SelectTrigger className="w-44">
