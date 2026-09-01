@@ -63,6 +63,8 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
     assetTag: a.assetTag,
     name: a.name,
     status: a.status,
+    icon: a.icon,
+    primaryPhotoId: a.primaryPhotoId,
     assetType: a.assetType,
     location: a.location,
     assignedTo: a.assignedTo,

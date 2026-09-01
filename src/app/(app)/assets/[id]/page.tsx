@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { AssetFormDialog } from "@/components/assets/asset-form-dialog";
 import { DeleteAssetButton } from "@/components/assets/delete-asset-button";
 import { AttachmentsPanel } from "@/components/assets/attachments-panel";
+import { AssetPicture } from "@/components/asset-picture";
+import { AssetPictureEditor } from "@/components/assets/asset-picture-editor";
 import { CheckoutDialog } from "@/components/checkouts/checkout-dialog";
 import { ReturnCheckoutDialog } from "@/components/checkouts/return-checkout-dialog";
 import { assetStatusBadgeVariant, assetStatusLabel } from "@/lib/asset-status";
@@ -64,9 +66,28 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
           ← Assets
         </Link>
         <div className="mt-1 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
-            <p className="font-mono text-sm text-muted-foreground">{asset.assetTag}</p>
+          <div className="flex items-center gap-4">
+            {canManage ? (
+              <AssetPictureEditor
+                assetId={asset.id}
+                name={asset.name}
+                icon={asset.icon}
+                typeIcon={asset.assetType.icon}
+                photoAttachmentId={asset.primaryPhotoId}
+              />
+            ) : (
+              <AssetPicture
+                photoAttachmentId={asset.primaryPhotoId}
+                icon={asset.icon}
+                typeIcon={asset.assetType.icon}
+                alt={asset.name}
+                size="xl"
+              />
+            )}
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
+              <p className="font-mono text-sm text-muted-foreground">{asset.assetTag}</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button

@@ -309,3 +309,72 @@ export async function deleteAttachment(attachmentId: string) {
   await deleteStoredFile(attachment.path);
   revalidatePath(`/assets/${attachment.assetId}`);
 }
+
+export async function setAssetIcon(assetId: string, icon: string | null) {
+  const session = await requirePermission("asset:manage");
+  const before = await prisma.asset.findUniqueOrThrow({ where: { id: assetId } });
+  const asset = await prisma.asset.update({ where: { id: assetId }, data: { icon } });
+  await writeAudit({
+    entityType: "Asset",
+    entityId: assetId,
+    action: "UPDATE",
+    actorId: session.user.personId,
+    before: { icon: before.icon },
+    after: { icon: asset.icon },
+  });
+  revalidatePath(`/assets/${assetId}`);
+}
+
+export async function setAssetPrimaryPhoto(assetId: string, formData: FormData) {
+  const session = await requireSession();
+  if (!session.user.permissions.includes("asset:manage")) {
+    throw new Error("Missing permission: asset:manage");
+  }
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) throw new Error("No file provided.");
+  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+  if (file.size > 20 * 1024 * 1024) throw new Error("File is too large (max 20MB).");
+
+  const asset = await prisma.asset.findUniqueOrThrow({ where: { id: assetId } });
+  const relativePath = await saveAssetAttachment(assetId, file);
+
+  const attachment = await prisma.attachment.create({
+    data: {
+      assetId,
+      kind: "photo",
+      path: relativePath,
+      originalName: file.name,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      uploadedById: session.user.personId,
+    },
+  });
+  await prisma.asset.update({ where: { id: assetId }, data: { primaryPhotoId: attachment.id } });
+
+  if (asset.primaryPhotoId) {
+    const old = await prisma.attachment.findUnique({ where: { id: asset.primaryPhotoId } });
+    if (old) {
+      await prisma.attachment.delete({ where: { id: old.id } });
+      await deleteStoredFile(old.path);
+    }
+  }
+
+  revalidatePath(`/assets/${assetId}`);
+  revalidatePath("/assets");
+  return attachment;
+}
+
+export async function removeAssetPrimaryPhoto(assetId: string) {
+  await requirePermission("asset:manage");
+  const asset = await prisma.asset.findUniqueOrThrow({ where: { id: assetId } });
+  if (!asset.primaryPhotoId) return;
+  const attachment = await prisma.attachment.findUnique({ where: { id: asset.primaryPhotoId } });
+  await prisma.asset.update({ where: { id: assetId }, data: { primaryPhotoId: null } });
+  if (attachment) {
+    await prisma.attachment.delete({ where: { id: attachment.id } });
+    await deleteStoredFile(attachment.path);
+  }
+  revalidatePath(`/assets/${assetId}`);
+  revalidatePath("/assets");
+}

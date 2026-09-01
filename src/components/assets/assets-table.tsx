@@ -25,13 +25,16 @@ import {
 } from "@/components/ui/table";
 import { assetStatusBadgeVariant, assetStatusLabel } from "@/lib/asset-status";
 import { bulkAssign, bulkMove, bulkRetire, bulkTag } from "@/lib/actions/assets";
+import { AssetPicture } from "@/components/asset-picture";
 
 type AssetRow = {
   id: string;
   assetTag: string;
   name: string;
   status: string;
-  assetType: { name: string };
+  icon: string | null;
+  primaryPhotoId: string | null;
+  assetType: { name: string; icon: string | null };
   location: { id: string; name: string } | null;
   assignedTo: { id: string; name: string } | null;
   tags: Array<{ tag: { name: string } }>;
@@ -202,10 +205,19 @@ export function AssetsTable({
                   </TableCell>
                 )}
                 <TableCell>
-                  <Link href={`/assets/${asset.id}`} className="hover:underline">
-                    <span className="font-medium">{asset.name}</span>
-                    <span className="ml-2 font-mono text-xs text-muted-foreground">
-                      {asset.assetTag}
+                  <Link href={`/assets/${asset.id}`} className="flex items-center gap-2 hover:underline">
+                    <AssetPicture
+                      photoAttachmentId={asset.primaryPhotoId}
+                      icon={asset.icon}
+                      typeIcon={asset.assetType.icon}
+                      alt={asset.name}
+                      size="sm"
+                    />
+                    <span>
+                      <span className="font-medium">{asset.name}</span>
+                      <span className="ml-2 font-mono text-xs text-muted-foreground">
+                        {asset.assetTag}
+                      </span>
                     </span>
                   </Link>
                 </TableCell>

@@ -226,6 +226,12 @@ model Asset {
   vendor            String?
   warrantyExpiresAt DateTime?
 
+  // Picture: an uploaded photo takes precedence over an icon override, which
+  // takes precedence over the asset type's default icon.
+  icon           String?
+  primaryPhotoId String?     @unique
+  primaryPhoto   Attachment? @relation("AssetPrimaryPhoto", fields: [primaryPhotoId], references: [id], onDelete: SetNull)
+
   tags        AssetTag[]
   attachments Attachment[]
   kitMembers  KitMember[]
@@ -270,6 +276,8 @@ model Attachment {
 
   uploadedById String?
   uploadedBy   Person? @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  primaryPhotoOfAsset Asset? @relation("AssetPrimaryPhoto")
 
   createdAt DateTime @default(now())
 
