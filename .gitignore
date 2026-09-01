@@ -48,4 +48,8 @@ next-env.d.ts
 
 # Prisma CLI's agent-skill docs (fetched on `prisma init`, not app code)
 /.claude/skills
+/.claude/scheduled_tasks.lock
 skills-lock.json
+
+# local backups from scripts/backup.sh
+/backups
