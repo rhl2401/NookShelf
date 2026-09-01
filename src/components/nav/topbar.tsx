@@ -13,11 +13,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { AssetTypeIcon } from "@/components/asset-type-icon";
 
 export function Topbar({
   user,
+  appName,
+  logoUrl,
+  icon,
+  iconColor,
 }: {
   user: { name?: string | null; email?: string | null; image?: string | null };
+  appName: string;
+  logoUrl?: string | null;
+  icon?: string | null;
+  iconColor?: string | null;
 }) {
   const initials = (user.name || user.email || "?")
     .split(" ")
@@ -29,8 +38,15 @@ export function Topbar({
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4">
       <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-        <Boxes className="size-5" />
-        <span className="hidden sm:inline">Asset Management</span>
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt={appName} className="h-6 max-w-32 object-contain" />
+        ) : icon ? (
+          <AssetTypeIcon icon={icon} color={iconColor} size="sm" />
+        ) : (
+          <Boxes className="size-5" />
+        )}
+        <span className="hidden sm:inline">{appName}</span>
       </Link>
 
       <div className="flex items-center gap-2">

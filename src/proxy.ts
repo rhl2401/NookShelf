@@ -7,7 +7,7 @@ import { authConfig } from "@/auth.config";
 // session cookie, not hit the database.
 const { auth } = NextAuth(authConfig);
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/api/branding/logo"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;

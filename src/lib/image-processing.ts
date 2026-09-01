@@ -1,6 +1,7 @@
 import "server-only";
 import sharp from "sharp";
 import { THUMB_SIZE } from "@/lib/picture-size";
+import { MAX_LOGO_DIMENSION } from "@/lib/branding-shared";
 
 export const AVATAR_SIZE = 256;
 const WEBP_QUALITY = 82;
@@ -44,4 +45,21 @@ export async function processPictureUpload(
     main: { buffer: mainBuffer, width: size, height: size },
     thumb: { buffer: thumbBuffer, width: THUMB_SIZE, height: THUMB_SIZE },
   };
+}
+
+/**
+ * Downscales to fit within a bounding box without cropping or forcing a square,
+ * and re-encodes as webp (keeps transparency) — used for the workspace logo,
+ * which is often a wide wordmark rather than an icon.
+ */
+export async function processLogoUpload(
+  input: Buffer,
+): Promise<{ buffer: Buffer; width: number; height: number }> {
+  const resized = sharp(input)
+    .rotate()
+    .resize(MAX_LOGO_DIMENSION, MAX_LOGO_DIMENSION, { fit: "inside", withoutEnlargement: true })
+    .webp({ quality: WEBP_QUALITY });
+  const buffer = await resized.toBuffer();
+  const { width, height } = await sharp(buffer).metadata();
+  return { buffer, width: width ?? MAX_LOGO_DIMENSION, height: height ?? MAX_LOGO_DIMENSION };
 }

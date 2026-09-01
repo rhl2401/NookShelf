@@ -47,6 +47,18 @@ export async function saveAvatarFile(buffer: Buffer) {
   return relativePath;
 }
 
+/** Saves a processed logo buffer under uploads/branding/, returning the relative path stored on WorkspaceSettings.logoPath. */
+export async function saveLogoFile(buffer: Buffer) {
+  const dir = path.join(uploadsRoot(), "branding");
+  await mkdir(dir, { recursive: true });
+
+  const filename = `${crypto.randomUUID()}.webp`;
+  const relativePath = path.join("branding", filename);
+  await writeFile(path.join(uploadsRoot(), relativePath), buffer);
+
+  return relativePath;
+}
+
 export async function deleteStoredFile(relativePath: string) {
   try {
     await unlink(path.join(/* turbopackIgnore: true */ uploadsRoot(), relativePath));

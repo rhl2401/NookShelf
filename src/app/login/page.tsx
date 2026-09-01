@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Boxes, FlaskConical } from "lucide-react";
+import { getWorkspaceBranding } from "@/lib/actions/workspace-settings";
+import { DEFAULT_APP_NAME, DEFAULT_SIGN_IN_SUBTITLE } from "@/lib/branding-shared";
+import { AssetTypeIcon } from "@/components/asset-type-icon";
 
 const PROVIDERS: Array<{ id: string; label: string; enabled: boolean }> = [
   {
@@ -43,6 +46,11 @@ export default async function LoginPage({
   const redirectTo = typeof callbackUrl === "string" ? callbackUrl : "/dashboard";
   const enabledProviders = PROVIDERS.filter((p) => p.enabled);
   const devLoginEnabled = isDevLoginEnabled();
+  const branding = await getWorkspaceBranding();
+  const appName = branding.appName ?? DEFAULT_APP_NAME;
+  const headline = branding.signInHeadline ?? appName;
+  const subtitle = branding.signInSubtitle ?? DEFAULT_SIGN_IN_SUBTITLE;
+  const logoUrl = branding.hasLogo ? `/api/branding/logo?v=${branding.updatedAt?.getTime()}` : null;
 
   const people = devLoginEnabled
     ? await prisma.person.findMany({
@@ -56,13 +64,18 @@ export default async function LoginPage({
     <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 p-6">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-foreground text-background">
-            <Boxes className="size-6" />
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight">Asset Management</h1>
-          <p className="text-sm text-muted-foreground">
-            Sign in to view and manage assets, locations, and kits.
-          </p>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={appName} className="max-h-11 max-w-40 object-contain" />
+          ) : branding.icon ? (
+            <AssetTypeIcon icon={branding.icon} color={branding.iconColor} size="md" />
+          ) : (
+            <div className="flex size-11 items-center justify-center rounded-xl bg-foreground text-background">
+              <Boxes className="size-6" />
+            </div>
+          )}
+          <h1 className="text-xl font-semibold tracking-tight">{headline}</h1>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
 
         <div className="flex flex-col gap-3">

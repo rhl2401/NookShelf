@@ -8,9 +8,10 @@ import { WebhookRowActions } from "@/components/settings/webhook-row-actions";
 import { EmailPrefToggle } from "@/components/settings/email-pref-toggle";
 import { AvatarUploader } from "@/components/settings/avatar-uploader";
 import { PictureSizeControl } from "@/components/settings/picture-size-control";
+import { BrandingForm } from "@/components/settings/branding-form";
 import { getDefaultCurrency, currencyLabel } from "@/lib/currency";
 import { DataIoCard } from "@/components/settings/data-io-card";
-import { getWorkspacePictureSize } from "@/lib/actions/workspace-settings";
+import { getWorkspacePictureSize, getWorkspaceBranding } from "@/lib/actions/workspace-settings";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -23,6 +24,7 @@ export default async function SettingsPage() {
 
   const webhooks = canManageSettings ? await prisma.webhookEndpoint.findMany() : [];
   const pictureSize = canManageSettings ? await getWorkspacePictureSize() : null;
+  const branding = canManageSettings ? await getWorkspaceBranding() : null;
 
   const providers = [
     { name: "Google", configured: Boolean(process.env.AUTH_GOOGLE_ID) },
@@ -74,6 +76,23 @@ export default async function SettingsPage() {
 
       {canManageSettings && (
         <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Branding</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BrandingForm
+                appName={branding!.appName}
+                logoUrl={branding!.hasLogo ? `/api/branding/logo?v=${branding!.updatedAt?.getTime()}` : null}
+                icon={branding!.icon}
+                iconColor={branding!.iconColor}
+                color={branding!.color}
+                signInHeadline={branding!.signInHeadline}
+                signInSubtitle={branding!.signInSubtitle}
+              />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">OAuth providers</CardTitle>

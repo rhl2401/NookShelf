@@ -351,6 +351,24 @@ model Picture {
 model WorkspaceSettings {
   id          String   @id @default("singleton")
   pictureSize Int      @default(512) // one of PICTURE_SIZE_OPTIONS — see src/lib/image-processing.ts
+
+  // Branding (Settings → Branding, settings:manage) — all nullable, falling back to
+  // defaults in src/lib/branding-shared.ts when unset. Resolution happens at each
+  // read site (root layout, topbar, /login), not stored pre-resolved.
+  appName        String?
+  logoPath       String? // relative path under uploads/branding/ — aspect ratio preserved, not square-cropped
+  logoSizeBytes  Int?
+  // Alternative to logoPath — an icon from the shared icon library (see
+  // src/lib/icon-names.ts / icon-colors.ts). Display precedence: logo > icon > default glyph.
+  icon           String?
+  iconColor      String?
+  // Workspace accent color (hex, e.g. "#3b82f6") — overrides the primary/ring
+  // theme tokens app-wide. The app is deliberately monochrome otherwise; this
+  // is the one accent, not a full theme. Null keeps the default monotone look.
+  color          String?
+  signInHeadline String?
+  signInSubtitle String?
+
   updatedAt   DateTime @updatedAt
 }
 
