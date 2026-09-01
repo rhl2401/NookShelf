@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Download, Upload, FileJson, FileSpreadsheet, FileArchive } from "lucide-react";
+import { WorkspaceBadge } from "@/components/settings/workspace-badge";
 
 const FORMATS = [
   { value: "json", label: "JSON", icon: FileJson, extension: ".json" },
@@ -74,7 +75,9 @@ export function DataIoCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Import / export</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base">
+          Import / export <WorkspaceBadge />
+        </CardTitle>
         <CardDescription>
           Back up or bulk-edit your locations, asset types, assets, and kits. Doesn&apos;t include
           people, roles, or checkout history.
