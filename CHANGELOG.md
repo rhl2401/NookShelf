@@ -1,7 +1,10 @@
 # Changelog
 
-All notable changes are recorded here, one entry per version bump (see
-`feedback_minor_version_bump_per_feature` — every new feature gets its own minor version).
+All notable changes are recorded here, one entry per version bump. Versioning policy: every new
+feature is a **minor** bump (`0.X.0`); every breaking change is a **major** bump (`X.0.0`) and its
+entry always lists **Breaking changes** and **Migration steps** explicitly — anything you need to
+do by hand beyond the normal upgrade steps.
+
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
