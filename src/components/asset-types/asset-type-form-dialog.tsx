@@ -16,8 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DialogTriggerButton } from "@/components/dialog-trigger-button";
 import { FieldSchemaEditor } from "@/components/asset-types/field-schema-editor";
-import { IconPicker } from "@/components/icon-picker";
-import { PicturePicker } from "@/components/pictures/picture-picker";
+import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
 import type { PictureRef } from "@/components/pictures/picture-row";
 import { createAssetType, updateAssetType } from "@/lib/actions/asset-types";
 import type { AssetFieldDef } from "@/lib/asset-fields";
@@ -113,30 +112,24 @@ export function AssetTypeFormDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label>Icon</Label>
-              <IconPicker
-                value={icon}
-                onChange={setIcon}
-                color={iconColor}
-                onColorChange={setIconColor}
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Picture</Label>
-              <PicturePicker
-                value={pictureId}
-                onChange={setPictureId}
-                myPictures={myPictures}
-                workspacePictures={workspacePictures}
-              />
-            </div>
+          <div className="grid gap-1.5">
+            <Label>Icon / picture</Label>
+            <PictureIconEditor
+              name={name || "Asset type"}
+              icon={icon}
+              onIconChange={setIcon}
+              color={iconColor}
+              onColorChange={setIconColor}
+              pictureId={pictureId}
+              onPictureChange={setPictureId}
+              myPictures={myPictures}
+              workspacePictures={workspacePictures}
+            />
+            <p className="text-xs text-muted-foreground">
+              Shown only on the asset type itself — assets of this type keep using their own
+              picture or icon, never this one.
+            </p>
           </div>
-          <p className="-mt-2 text-xs text-muted-foreground">
-            This picture is shown only on the asset type itself — assets of this type keep using
-            their own picture or icon, never this one.
-          </p>
 
           <div className="grid gap-1.5">
             <Label>Custom fields</Label>

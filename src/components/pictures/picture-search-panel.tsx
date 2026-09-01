@@ -10,7 +10,7 @@ import { uploadPicture, searchPictures } from "@/lib/actions/pictures";
 
 /**
  * Upload-new + search-across-your-and-workspace-pictures body, shared by the
- * asset detail hero editor and the draft-state PicturePicker used in form
+ * asset detail hero editor and the draft-state PictureIconEditor used in form
  * dialogs. `onSelect` fires both when an existing picture is clicked and
  * when a fresh upload finishes — the caller decides what "selected" means
  * (apply immediately, or just update local draft state).

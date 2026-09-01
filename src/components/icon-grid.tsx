@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 const SEARCH_RESULT_LIMIT = 120;
 
-/** Search box + grid of selectable icons, with a "No icon" option. Shared by IconPicker and AssetPictureEditor. */
+/** Search box + grid of selectable icons, with a "No icon" option. Shared by AssetPictureEditor and PictureIconEditor. */
 export function IconGrid({
   value,
   onSelect,

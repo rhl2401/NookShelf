@@ -17,8 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DialogTriggerButton } from "@/components/dialog-trigger-button";
 import { AssetPicker, type PickableAsset } from "@/components/kits/asset-picker";
-import { IconPicker } from "@/components/icon-picker";
-import { PicturePicker } from "@/components/pictures/picture-picker";
+import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
 import type { PictureRef } from "@/components/pictures/picture-row";
 import { createKit, updateKit } from "@/lib/actions/kits";
 
@@ -102,25 +101,19 @@ export function KitFormDialog({
               rows={2}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <Label>Icon</Label>
-              <IconPicker
-                value={icon}
-                onChange={setIcon}
-                color={iconColor}
-                onColorChange={setIconColor}
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Picture</Label>
-              <PicturePicker
-                value={pictureId}
-                onChange={setPictureId}
-                myPictures={myPictures}
-                workspacePictures={workspacePictures}
-              />
-            </div>
+          <div className="grid gap-1.5">
+            <Label>Icon / picture</Label>
+            <PictureIconEditor
+              name={name || "Kit"}
+              icon={icon}
+              onIconChange={setIcon}
+              color={iconColor}
+              onColorChange={setIconColor}
+              pictureId={pictureId}
+              onPictureChange={setPictureId}
+              myPictures={myPictures}
+              workspacePictures={workspacePictures}
+            />
           </div>
           <div className="grid gap-1.5">
             <Label>Assets in this kit</Label>
