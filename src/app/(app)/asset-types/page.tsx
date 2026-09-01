@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { AssetTypeFormDialog } from "@/components/asset-types/asset-type-form-dialog";
 import { DeleteAssetTypeButton } from "@/components/asset-types/delete-asset-type-button";
+import { AssetTypeIcon } from "@/components/asset-type-icon";
 import type { AssetFieldDef } from "@/lib/asset-fields";
 import { Plus } from "lucide-react";
 
@@ -42,24 +43,27 @@ export default async function AssetTypesPage() {
           return (
             <Card key={assetType.id}>
               <CardContent className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{assetType.name}</p>
-                    {assetType.isBuiltIn && <Badge variant="outline">Built-in</Badge>}
-                    {assetType.category && (
-                      <Badge variant="secondary">{assetType.category}</Badge>
-                    )}
-                    <Badge variant="outline">{assetType._count.assets} assets</Badge>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {fields.map((f) => (
-                      <Badge key={f.key} variant="outline" className="font-mono text-[10px]">
-                        {f.label}
-                      </Badge>
-                    ))}
-                    {fields.length === 0 && (
-                      <span className="text-xs text-muted-foreground">No custom fields</span>
-                    )}
+                <div className="flex items-center gap-4">
+                  <AssetTypeIcon icon={assetType.icon} size="lg" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{assetType.name}</p>
+                      {assetType.isBuiltIn && <Badge variant="outline">Built-in</Badge>}
+                      {assetType.category && (
+                        <Badge variant="secondary">{assetType.category}</Badge>
+                      )}
+                      <Badge variant="outline">{assetType._count.assets} assets</Badge>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {fields.map((f) => (
+                        <Badge key={f.key} variant="outline" className="font-mono text-[10px]">
+                          {f.label}
+                        </Badge>
+                      ))}
+                      {fields.length === 0 && (
+                        <span className="text-xs text-muted-foreground">No custom fields</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
