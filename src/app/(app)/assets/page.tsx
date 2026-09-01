@@ -37,7 +37,7 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
     where.locationId = { in: ids };
   }
 
-  const [assets, assetTypes, tree, people] = await Promise.all([
+  const [assets, assetTypes, tree, people, myPictures, workspacePictures] = await Promise.all([
     prisma.asset.findMany({
       where,
       include: {
@@ -52,6 +52,20 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
     prisma.assetType.findMany({ orderBy: { name: "asc" } }),
     buildLocationTree(),
     prisma.person.findMany({ where: { status: { not: "MERGED" } }, orderBy: { name: "asc" } }),
+    session.user.personId
+      ? prisma.picture.findMany({
+          where: { scope: "PERSONAL", ownerId: session.user.personId },
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+    prisma.picture.findMany({
+      where: { scope: "WORKSPACE" },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: { id: true, name: true },
+    }),
   ]);
 
   const flatLocations = flattenLocationTree(tree);
@@ -96,6 +110,8 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
               people={people}
               assetOptions={assetOptions}
               defaultCurrency={getDefaultCurrency()}
+              myPictures={myPictures}
+              workspacePictures={workspacePictures}
             />
           )}
         </div>

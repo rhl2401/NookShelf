@@ -29,6 +29,17 @@ const assetSchema = z.object({
 
 type AssetInput = z.infer<typeof assetSchema>;
 
+// Icon/picture can only be set at creation time via this form — after that, use the
+// live AssetPictureEditor on the asset detail page (keeps a single source of truth
+// for editing an existing asset's photo instead of two separate editors).
+const createAssetSchema = assetSchema.extend({
+  icon: z.string().nullable().optional(),
+  iconColor: z.string().nullable().optional(),
+  primaryPictureId: z.string().nullable().optional(),
+});
+
+type CreateAssetInput = z.infer<typeof createAssetSchema>;
+
 async function isAssetAncestorOrSelf(candidateAncestorId: string, assetId: string) {
   let currentId: string | null = assetId;
   while (currentId) {
@@ -62,9 +73,9 @@ async function loadFieldSchema(assetTypeId: string): Promise<AssetFieldDef[]> {
   return (assetType.fieldSchema as AssetFieldDef[]) ?? [];
 }
 
-export async function createAsset(input: AssetInput) {
+export async function createAsset(input: CreateAssetInput) {
   const session = await requirePermission("asset:manage");
-  const data = assetSchema.parse(input);
+  const data = createAssetSchema.parse(input);
 
   const fieldSchema = await loadFieldSchema(data.assetTypeId);
   const customFields = validateCustomFields(fieldSchema, data.customFields ?? {});
@@ -88,6 +99,9 @@ export async function createAsset(input: AssetInput) {
             assignedToId: data.assignedToId || null,
             parentAssetId: data.parentAssetId || null,
             status: data.status,
+            icon: data.icon || null,
+            iconColor: data.iconColor || null,
+            primaryPictureId: data.primaryPictureId || null,
             notes: data.notes || null,
             purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : null,
             purchasePrice: data.purchasePrice != null ? String(data.purchasePrice) : null,

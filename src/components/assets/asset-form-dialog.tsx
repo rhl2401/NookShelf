@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/select";
 import { CustomFieldsForm, type CustomFieldValues } from "@/components/assets/custom-fields-form";
 import { TagsInput } from "@/components/ui-custom/tags-input";
+import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
+import type { PictureRef } from "@/components/pictures/picture-row";
 import { createAsset, updateAsset } from "@/lib/actions/assets";
 import type { AssetFieldDef } from "@/lib/asset-fields";
 import { ASSET_STATUSES } from "@/lib/asset-status";
@@ -44,6 +46,8 @@ export function AssetFormDialog({
   asset,
   defaultAssetTypeId,
   defaultCurrency = "USD",
+  myPictures = [],
+  workspacePictures = [],
 }: {
   trigger: React.ReactElement;
   assetTypes: AssetTypeOption[];
@@ -52,6 +56,8 @@ export function AssetFormDialog({
   assetOptions: AssetOption[];
   defaultAssetTypeId?: string;
   defaultCurrency?: string;
+  myPictures?: PictureRef[];
+  workspacePictures?: PictureRef[];
   asset?: {
     id: string;
     name: string;
@@ -99,6 +105,9 @@ export function AssetFormDialog({
   const [customFields, setCustomFields] = useState<CustomFieldValues>(
     (asset?.customFields as CustomFieldValues) ?? {},
   );
+  const [icon, setIcon] = useState<string | null>(null);
+  const [iconColor, setIconColor] = useState<string | null>(null);
+  const [pictureId, setPictureId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -129,7 +138,7 @@ export function AssetFormDialog({
         if (asset?.id) {
           await updateAsset(asset.id, input);
         } else {
-          await createAsset(input);
+          await createAsset({ ...input, icon, iconColor, primaryPictureId: pictureId });
         }
         toast.success(asset?.id ? "Asset updated" : "Asset created");
         setOpen(false);
@@ -157,6 +166,26 @@ export function AssetFormDialog({
               <Label>Name</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
+
+            {!asset?.id && (
+              <div className="col-span-2 grid gap-1.5">
+                <Label>Icon / picture</Label>
+                <PictureIconEditor
+                  name={name || "Asset"}
+                  icon={icon}
+                  onIconChange={setIcon}
+                  color={iconColor}
+                  onColorChange={setIconColor}
+                  pictureId={pictureId}
+                  onPictureChange={setPictureId}
+                  myPictures={myPictures}
+                  workspacePictures={workspacePictures}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Once created, change the photo or icon from the asset&apos;s own page.
+                </p>
+              </div>
+            )}
 
             <div className="grid gap-1.5">
               <Label>Asset type</Label>
