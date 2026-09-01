@@ -20,6 +20,24 @@ The `app` container runs `prisma migrate deploy` and seeds default roles/asset t
 start (both are idempotent), then starts the server. Uploaded files persist in the `uploads`
 Docker volume; the database persists in `db_data`.
 
+## Upgrading an existing instance
+
+1. **Back up first**: `npm run backup` (or `scripts/backup.sh` directly) dumps the database and
+   uploaded files to `backups/<timestamp>/`. Do this before every upgrade — it takes seconds and
+   costs nothing.
+2. Check `CHANGELOG.md` for the version(s) you're jumping — most releases are drop-in, but it
+   calls out anything that needs a manual step (new required env var, etc.).
+3. Pull the new code/image, then `docker compose up -d --build`.
+4. On startup, the `app` container automatically runs `prisma migrate deploy`, applying any
+   migrations added since your last upgrade — non-interactively, and only the ones not already
+   applied (tracked in the `_prisma_migrations` table), so this is safe to run on every restart,
+   not just upgrades. If a migration fails, the container exits before starting the server
+   instead of serving against a half-migrated schema — check `docker compose logs app`.
+5. If something's wrong after upgrading, `scripts/restore.sh backups/<timestamp>` restores the
+   database and uploads from a backup and restarts the app (stop and redeploy the previous image
+   version first if the new code itself is the problem). This is destructive — it asks for
+   confirmation before replacing anything.
+
 ## Local development (without Docker for the app)
 
 ```bash
@@ -64,7 +82,10 @@ any format from the same page to see the exact structure expected.
 - `npm run build` / `npm run dev` / `npm run start`
 - `npm run db:migrate` — create + apply a migration from schema changes (interactive)
 - `npm run db:deploy` — apply existing migrations non-interactively (what Docker uses)
-- `npm run db:seed` — seed default roles + built-in asset types (Cable, Generic)
+- `npm run db:seed` — seed default roles + the "Generic" built-in asset type (Cable/Vehicle/Battery
+  are opt-in starter templates now — see Asset Types → Import template)
+- `npm run backup` / `scripts/restore.sh backups/<timestamp>` — see "Upgrading an existing
+  instance" above
 
 ## Known simplifications (v1)
 
