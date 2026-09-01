@@ -30,6 +30,7 @@ export function AssetTypeFormDialog({
     name: string;
     category: string | null;
     icon?: string | null;
+    iconColor?: string | null;
     fieldSchema: unknown;
   };
 }) {
@@ -37,6 +38,7 @@ export function AssetTypeFormDialog({
   const [name, setName] = useState(assetType?.name ?? "");
   const [category, setCategory] = useState(assetType?.category ?? "");
   const [icon, setIcon] = useState<string | null>(assetType?.icon ?? null);
+  const [iconColor, setIconColor] = useState<string | null>(assetType?.iconColor ?? null);
   const [fields, setFields] = useState<AssetFieldDef[]>(
     (assetType?.fieldSchema as AssetFieldDef[] | undefined) ?? [],
   );
@@ -52,10 +54,17 @@ export function AssetTypeFormDialog({
             name,
             category,
             icon: icon ?? undefined,
+            iconColor: iconColor ?? undefined,
             fieldSchema: cleanedFields,
           });
         } else {
-          await createAssetType({ name, category, icon: icon ?? undefined, fieldSchema: cleanedFields });
+          await createAssetType({
+            name,
+            category,
+            icon: icon ?? undefined,
+            iconColor: iconColor ?? undefined,
+            fieldSchema: cleanedFields,
+          });
         }
         toast.success(assetType?.id ? "Asset type updated" : "Asset type created");
         setOpen(false);
@@ -96,7 +105,12 @@ export function AssetTypeFormDialog({
 
           <div className="grid gap-1.5">
             <Label>Icon</Label>
-            <IconPicker value={icon} onChange={setIcon} />
+            <IconPicker
+              value={icon}
+              onChange={setIcon}
+              color={iconColor}
+              onColorChange={setIconColor}
+            />
           </div>
 
           <div className="grid gap-1.5">

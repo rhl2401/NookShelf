@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import { Ban } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ColorSwatches } from "@/components/color-swatches";
 import { ALL_ICON_NAMES, POPULAR_ICON_NAMES, humanizeIconName } from "@/lib/icon-names";
+import { getIconColor } from "@/lib/icon-colors";
 import { cn } from "@/lib/utils";
 
 const SEARCH_RESULT_LIMIT = 120;
@@ -14,10 +17,14 @@ export function IconGrid({
   value,
   onSelect,
   noIconLabel = "No icon",
+  color = null,
+  onColorChange,
 }: {
   value: string | null;
   onSelect: (icon: string | null) => void;
   noIconLabel?: string;
+  color?: string | null;
+  onColorChange?: (color: string | null) => void;
 }) {
   const [search, setSearch] = useState("");
 
@@ -31,8 +38,17 @@ export function IconGrid({
     };
   }, [query]);
 
+  const palette = getIconColor(color);
+  const glyphClass = palette ? palette.fg : "";
+
   return (
     <div className="flex flex-col gap-2">
+      {onColorChange && (
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs text-muted-foreground">Color</Label>
+          <ColorSwatches value={color} onSelect={onColorChange} />
+        </div>
+      )}
       <Input
         autoFocus
         placeholder="Search icons…"
@@ -62,7 +78,11 @@ export function IconGrid({
               value === name && "bg-muted ring-2 ring-ring",
             )}
           >
-            <DynamicIcon name={name as IconName} className="size-4.5" strokeWidth={1.5} />
+            <DynamicIcon
+              name={name as IconName}
+              className={cn("size-4.5", glyphClass)}
+              strokeWidth={1.5}
+            />
           </button>
         ))}
         {names.length === 0 && (

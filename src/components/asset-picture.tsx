@@ -6,14 +6,18 @@ import { AssetTypeIcon, PICTURE_CONTAINER_SIZE } from "@/components/asset-type-i
 export function AssetPicture({
   photoAttachmentId,
   icon,
+  color,
   typeIcon,
+  typeColor,
   alt,
   size = "md",
   className,
 }: {
   photoAttachmentId?: string | null;
   icon?: string | null;
+  color?: string | null;
   typeIcon?: string | null;
+  typeColor?: string | null;
   alt: string;
   size?: keyof typeof PICTURE_CONTAINER_SIZE;
   className?: string;
@@ -37,5 +41,12 @@ export function AssetPicture({
     );
   }
 
-  return <AssetTypeIcon icon={icon ?? typeIcon ?? null} size={size} className={className} />;
+  return (
+    <AssetTypeIcon
+      icon={icon ?? typeIcon ?? null}
+      color={icon ? color : typeColor}
+      size={size}
+      className={className}
+    />
+  );
 }

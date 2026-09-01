@@ -3,31 +3,39 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ImagePlus, Pencil } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { IconGrid } from "@/components/icon-grid";
 import { AssetPicture } from "@/components/asset-picture";
+import { PICTURE_CONTAINER_SIZE } from "@/components/asset-type-icon";
 import { setAssetIcon, setAssetPrimaryPhoto, removeAssetPrimaryPhoto } from "@/lib/actions/assets";
+import { cn } from "@/lib/utils";
 
 export function AssetPictureEditor({
   assetId,
   name,
   icon,
+  color,
   typeIcon,
+  typeColor,
   photoAttachmentId,
 }: {
   assetId: string;
   name: string;
   icon: string | null;
+  color: string | null;
   typeIcon: string | null;
+  typeColor: string | null;
   photoAttachmentId: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const hasPicture = Boolean(photoAttachmentId || icon || typeIcon);
 
   function uploadPhoto() {
     const file = fileInputRef.current?.files?.[0];
@@ -62,11 +70,22 @@ export function AssetPictureEditor({
   function pickIcon(nextIcon: string | null) {
     startTransition(async () => {
       try {
-        await setAssetIcon(assetId, nextIcon);
+        await setAssetIcon(assetId, { icon: nextIcon });
         setOpen(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Couldn't update icon");
+      }
+    });
+  }
+
+  function pickColor(nextColor: string | null) {
+    startTransition(async () => {
+      try {
+        await setAssetIcon(assetId, { iconColor: nextColor });
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Couldn't update color");
       }
     });
   }
@@ -77,17 +96,40 @@ export function AssetPictureEditor({
         render={
           <button
             type="button"
-            className="rounded-2xl outline-offset-2 transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
+            className="group relative rounded-2xl outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
           />
         }
       >
-        <AssetPicture
-          photoAttachmentId={photoAttachmentId}
-          icon={icon}
-          typeIcon={typeIcon}
-          alt={name}
-          size="xl"
-        />
+        {hasPicture ? (
+          <>
+            <AssetPicture
+              photoAttachmentId={photoAttachmentId}
+              icon={icon}
+              color={color}
+              typeIcon={typeIcon}
+              typeColor={typeColor}
+              alt={name}
+              size="xl"
+            />
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-foreground/0 opacity-0 transition group-hover:bg-foreground/50 group-hover:opacity-100">
+              <Pencil className="size-5 text-background" />
+            </div>
+          </>
+        ) : (
+          <div
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 border border-muted-foreground/20 bg-muted text-center transition-colors group-hover:bg-muted-foreground/15",
+              PICTURE_CONTAINER_SIZE.xl,
+            )}
+          >
+            <ImagePlus className="size-5 text-muted-foreground" />
+            <span className="px-1 text-[9px] leading-tight font-medium text-muted-foreground">
+              Add icon /
+              <br />
+              picture
+            </span>
+          </div>
+        )}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 gap-3 p-3">
         <div className="flex flex-col gap-1.5">
@@ -118,7 +160,13 @@ export function AssetPictureEditor({
           <p className="text-xs text-muted-foreground">
             Used when there&apos;s no photo. Leave unset to use the asset type&apos;s icon.
           </p>
-          <IconGrid value={icon} onSelect={pickIcon} noIconLabel="Use type's icon" />
+          <IconGrid
+            value={icon}
+            onSelect={pickIcon}
+            noIconLabel="Use type's icon"
+            color={color}
+            onColorChange={pickColor}
+          />
         </div>
       </PopoverContent>
     </Popover>

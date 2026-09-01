@@ -72,14 +72,18 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                 assetId={asset.id}
                 name={asset.name}
                 icon={asset.icon}
+                color={asset.iconColor}
                 typeIcon={asset.assetType.icon}
+                typeColor={asset.assetType.iconColor}
                 photoAttachmentId={asset.primaryPhotoId}
               />
             ) : (
               <AssetPicture
                 photoAttachmentId={asset.primaryPhotoId}
                 icon={asset.icon}
+                color={asset.iconColor}
                 typeIcon={asset.assetType.icon}
+                typeColor={asset.assetType.iconColor}
                 alt={asset.name}
                 size="xl"
               />

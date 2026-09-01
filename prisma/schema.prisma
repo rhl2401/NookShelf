@@ -172,6 +172,7 @@ model AssetType {
   name        String  @unique
   category    String?
   icon        String?
+  iconColor   String? // key into the icon color palette, e.g. "blue" — see src/lib/icon-colors.ts
   isBuiltIn   Boolean @default(false)
   // Array of { key, label, type, required, options?, unit? } — see src/lib/asset-fields.ts
   fieldSchema Json    @default("[]")
@@ -229,6 +230,7 @@ model Asset {
   // Picture: an uploaded photo takes precedence over an icon override, which
   // takes precedence over the asset type's default icon.
   icon           String?
+  iconColor      String? // key into the icon color palette, e.g. "blue" — see src/lib/icon-colors.ts
   primaryPhotoId String?     @unique
   primaryPhoto   Attachment? @relation("AssetPrimaryPhoto", fields: [primaryPhotoId], references: [id], onDelete: SetNull)
 

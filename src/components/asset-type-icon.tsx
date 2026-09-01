@@ -3,6 +3,7 @@
 import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import { cn } from "@/lib/utils";
 import { isValidIconName } from "@/lib/icon-names";
+import { getIconColor } from "@/lib/icon-colors";
 
 export const PICTURE_CONTAINER_SIZE = {
   sm: "size-8 rounded-lg",
@@ -22,20 +23,23 @@ const CONTAINER_SIZE = PICTURE_CONTAINER_SIZE;
 
 export function AssetTypeIcon({
   icon,
+  color,
   size = "md",
   className,
 }: {
   icon: string | null | undefined;
+  color?: string | null;
   size?: keyof typeof CONTAINER_SIZE;
   className?: string;
 }) {
   const validIcon = icon && isValidIconName(icon) ? (icon as IconName) : null;
+  const palette = validIcon ? getIconColor(color) : null;
 
   return (
     <div
       className={cn(
         "flex shrink-0 items-center justify-center",
-        validIcon ? "bg-muted" : "border border-dashed border-muted-foreground/25",
+        validIcon ? (palette ? palette.bg : "bg-muted") : "border border-dashed border-muted-foreground/25",
         CONTAINER_SIZE[size],
         className,
       )}
@@ -43,7 +47,7 @@ export function AssetTypeIcon({
       {validIcon && (
         <DynamicIcon
           name={validIcon}
-          className={cn("text-foreground/80", GLYPH_SIZE[size])}
+          className={cn(palette ? palette.fg : "text-foreground/80", GLYPH_SIZE[size])}
           strokeWidth={1.5}
         />
       )}

@@ -44,7 +44,7 @@ export default async function AssetTypesPage() {
             <Card key={assetType.id}>
               <CardContent className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <AssetTypeIcon icon={assetType.icon} size="lg" />
+                  <AssetTypeIcon icon={assetType.icon} color={assetType.iconColor} size="lg" />
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{assetType.name}</p>

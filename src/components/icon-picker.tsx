@@ -11,9 +11,13 @@ import { humanizeIconName } from "@/lib/icon-names";
 export function IconPicker({
   value,
   onChange,
+  color = null,
+  onColorChange,
 }: {
   value: string | null;
   onChange: (icon: string | null) => void;
+  color?: string | null;
+  onColorChange?: (color: string | null) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -25,7 +29,7 @@ export function IconPicker({
         }
       >
         <span className="flex items-center gap-2">
-          <AssetTypeIcon icon={value} size="sm" />
+          <AssetTypeIcon icon={value} color={color} size="sm" />
           <span className="text-sm">{value ? humanizeIconName(value) : "No icon"}</span>
         </span>
         <ChevronDown className="size-4 opacity-50" />
@@ -37,6 +41,8 @@ export function IconPicker({
             onChange(icon);
             setOpen(false);
           }}
+          color={color}
+          onColorChange={onColorChange}
         />
       </PopoverContent>
     </Popover>
