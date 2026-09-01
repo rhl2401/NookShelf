@@ -82,7 +82,7 @@ export function CheckoutDialog({
             <Select value={borrowerId} onValueChange={(v) => setBorrowerId(v ?? "")}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select person">
-                  {(v: string) => people.find((p) => p.id === v)?.name}
+                  {(v: string) => people.find((p) => p.id === v)?.name ?? "Select person"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
