@@ -54,10 +54,14 @@ export function AssetsTable({
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
+  const [pendingLocation, setPendingLocation] = useState<string | undefined>(undefined);
+  const [pendingAssignee, setPendingAssignee] = useState<string | undefined>(undefined);
   const [bulkTagValue, setBulkTagValue] = useState("");
   const router = useRouter();
 
   const allSelected = assets.length > 0 && selected.size === assets.length;
+  const hasPendingChanges =
+    pendingLocation !== undefined || pendingAssignee !== undefined || bulkTagValue.trim() !== "";
 
   function toggleAll() {
     setSelected(allSelected ? new Set() : new Set(assets.map((a) => a.id)));
@@ -77,10 +81,31 @@ export function AssetsTable({
         await action();
         toast.success("Updated");
         setSelected(new Set());
+        setPendingLocation(undefined);
+        setPendingAssignee(undefined);
+        setBulkTagValue("");
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");
       }
+    });
+  }
+
+  function confirmChanges() {
+    const ids = Array.from(selected);
+    runBulk(async () => {
+      const tasks: Promise<unknown>[] = [];
+      if (pendingLocation !== undefined) {
+        tasks.push(bulkMove(ids, pendingLocation === "none" ? null : pendingLocation));
+      }
+      if (pendingAssignee !== undefined) {
+        tasks.push(bulkAssign(ids, pendingAssignee === "none" ? null : pendingAssignee));
+      }
+      const tag = bulkTagValue.trim();
+      if (tag) {
+        tasks.push(bulkTag(ids, tag.split(",").map((t) => t.trim()).filter(Boolean)));
+      }
+      await Promise.all(tasks);
     });
   }
 
@@ -91,14 +116,15 @@ export function AssetsTable({
           <span className="px-1 font-medium">{selected.size} selected</span>
 
           <Select<string>
-            onValueChange={(v) =>
-              v && runBulk(() => bulkMove(Array.from(selected), v === "none" ? null : v))
-            }
+            value={pendingLocation}
+            onValueChange={(v) => setPendingLocation(v ?? undefined)}
           >
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Move to…">
                 {(v: string) =>
-                  v === "none" ? "No location" : flatLocations.find((l) => l.id === v)?.label
+                  v === "none"
+                    ? "No location"
+                    : (flatLocations.find((l) => l.id === v)?.label ?? "Move to…")
                 }
               </SelectValue>
             </SelectTrigger>
@@ -113,13 +139,14 @@ export function AssetsTable({
           </Select>
 
           <Select<string>
-            onValueChange={(v) =>
-              v && runBulk(() => bulkAssign(Array.from(selected), v === "none" ? null : v))
-            }
+            value={pendingAssignee}
+            onValueChange={(v) => setPendingAssignee(v ?? undefined)}
           >
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Assign to…">
-                {(v: string) => (v === "none" ? "Unassigned" : people.find((p) => p.id === v)?.name)}
+                {(v: string) =>
+                  v === "none" ? "Unassigned" : (people.find((p) => p.id === v)?.name ?? "Assign to…")
+                }
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -132,30 +159,16 @@ export function AssetsTable({
             </SelectContent>
           </Select>
 
-          <div className="flex items-center gap-1">
-            <Input
-              placeholder="Add tag…"
-              className="h-8 w-32"
-              value={bulkTagValue}
-              onChange={(e) => setBulkTagValue(e.target.value)}
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!bulkTagValue}
-              onClick={() => {
-                runBulk(() =>
-                  bulkTag(
-                    Array.from(selected),
-                    bulkTagValue.split(",").map((t) => t.trim()).filter(Boolean),
-                  ),
-                );
-                setBulkTagValue("");
-              }}
-            >
-              Tag
-            </Button>
-          </div>
+          <Input
+            placeholder="Add tag…"
+            className="h-8 w-32"
+            value={bulkTagValue}
+            onChange={(e) => setBulkTagValue(e.target.value)}
+          />
+
+          <Button size="sm" disabled={!hasPendingChanges || isPending} onClick={confirmChanges}>
+            Confirm
+          </Button>
 
           <Button
             size="sm"
@@ -175,6 +188,12 @@ export function AssetsTable({
             Print labels
           </Button>
         </div>
+      )}
+      {canManage && selected.size > 0 && (
+        <p className="px-1 text-xs text-muted-foreground">
+          Move / Assign / tag set ownership and location only — they don&apos;t create a checkout.
+          Pick your changes above, then Confirm to apply them together.
+        </p>
       )}
 
       <div className="overflow-x-auto rounded-lg border">
