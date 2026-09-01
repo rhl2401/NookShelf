@@ -9,6 +9,7 @@ import { EmailPrefToggle } from "@/components/settings/email-pref-toggle";
 import { AvatarUploader } from "@/components/settings/avatar-uploader";
 import { PictureSizeControl } from "@/components/settings/picture-size-control";
 import { BrandingForm } from "@/components/settings/branding-form";
+import { WorkspaceBadge } from "@/components/settings/workspace-badge";
 import { getDefaultCurrency, currencyLabel } from "@/lib/currency";
 import { DataIoCard } from "@/components/settings/data-io-card";
 import { getWorkspacePictureSize, getWorkspaceBranding } from "@/lib/actions/workspace-settings";
@@ -78,7 +79,9 @@ export default async function SettingsPage() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Branding</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                Branding <WorkspaceBadge />
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <BrandingForm
@@ -95,7 +98,9 @@ export default async function SettingsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">OAuth providers</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                OAuth providers <WorkspaceBadge />
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm">
               {providers.map((p) => (
@@ -114,7 +119,9 @@ export default async function SettingsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Email (SMTP)</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                Email (SMTP) <WorkspaceBadge />
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-sm">
               <Badge variant={process.env.SMTP_HOST ? "default" : "outline"}>
@@ -125,7 +132,9 @@ export default async function SettingsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Default currency</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                Default currency <WorkspaceBadge />
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-sm">
               <Badge variant="outline">{currencyLabel(getDefaultCurrency())}</Badge>
@@ -138,7 +147,9 @@ export default async function SettingsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Picture size</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                Picture size <WorkspaceBadge />
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <PictureSizeControl pictureSize={pictureSize!} />
@@ -147,7 +158,9 @@ export default async function SettingsPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Webhooks</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                Webhooks <WorkspaceBadge />
+              </CardTitle>
               <WebhookFormDialog />
             </CardHeader>
             <CardContent className="flex flex-col gap-3">

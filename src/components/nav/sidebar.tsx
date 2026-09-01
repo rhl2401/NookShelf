@@ -15,6 +15,7 @@ import {
   Settings,
   Image,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Permission } from "@/lib/permissions";
 
@@ -23,6 +24,9 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   permission?: Permission;
+  // Gated by a workspace-administration permission (users/roles/system settings) rather
+  // than day-to-day content management — flagged in the nav so it reads as admin territory.
+  adminOnly?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -34,9 +38,15 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/checkouts", label: "Checkouts", icon: ArrowLeftRight, permission: "checkout:view" },
   { href: "/scan", label: "Scan", icon: ScanLine },
   { href: "/pictures", label: "Pictures", icon: Image, permission: "asset:manage" },
-  { href: "/people", label: "People", icon: Users, permission: "user:manage" },
-  { href: "/roles", label: "Roles", icon: ShieldCheck, permission: "role:manage" },
-  { href: "/settings", label: "Settings", icon: Settings, permission: "settings:manage" },
+  { href: "/people", label: "People", icon: Users, permission: "user:manage", adminOnly: true },
+  { href: "/roles", label: "Roles", icon: ShieldCheck, permission: "role:manage", adminOnly: true },
+  {
+    href: "/settings",
+    label: "Settings",
+    icon: Settings,
+    permission: "settings:manage",
+    adminOnly: true,
+  },
 ];
 
 export function Sidebar({ permissions }: { permissions: string[] }) {
@@ -61,7 +71,15 @@ export function Sidebar({ permissions }: { permissions: string[] }) {
               )}
             >
               <Icon className="size-4" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.adminOnly && (
+                <Badge
+                  variant="outline"
+                  className="shrink-0 border-current/30 bg-transparent px-1.5 py-0 text-[10px] font-normal text-current opacity-70"
+                >
+                  Admin
+                </Badge>
+              )}
             </Link>
           );
         },
