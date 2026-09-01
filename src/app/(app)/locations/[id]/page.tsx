@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LocationFormDialog } from "@/components/locations/location-form-dialog";
 import { DeleteLocationDialog } from "@/components/locations/delete-location-dialog";
+import { AssetPicture } from "@/components/asset-picture";
 
 export default async function LocationDetailPage({
   params,
@@ -27,7 +28,24 @@ export default async function LocationDetailPage({
   });
   if (!location) notFound();
 
-  const [path, tree] = await Promise.all([getLocationPath(id), buildLocationTree()]);
+  const [path, tree, myPictures, workspacePictures] = await Promise.all([
+    getLocationPath(id),
+    buildLocationTree(),
+    session?.user.personId
+      ? prisma.picture.findMany({
+          where: { scope: "PERSONAL", ownerId: session.user.personId },
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+    prisma.picture.findMany({
+      where: { scope: "WORKSPACE" },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: { id: true, name: true },
+    }),
+  ]);
   const flatLocations = flattenLocationTree(tree);
 
   return (
@@ -47,13 +65,29 @@ export default async function LocationDetailPage({
           ))}
         </div>
         <div className="mt-1 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">{location.name}</h1>
+          <div className="flex items-center gap-3">
+            <AssetPicture
+              pictureId={location.primaryPictureId}
+              icon={location.icon}
+              color={location.iconColor}
+              alt={location.name}
+              size="lg"
+            />
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">{location.name}</h1>
+              {location.code && (
+                <p className="font-mono text-xs text-muted-foreground">{location.code}</p>
+              )}
+            </div>
+          </div>
           {canManage && (
             <div className="flex gap-2">
               <LocationFormDialog
                 trigger={<Button variant="outline">Edit</Button>}
                 flatLocations={flatLocations}
                 location={location}
+                myPictures={myPictures}
+                workspacePictures={workspacePictures}
               />
               <DeleteLocationDialog
                 locationId={location.id}

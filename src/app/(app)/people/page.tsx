@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreatePersonDialog } from "@/components/people/create-person-dialog";
 import { EditRolesDialog } from "@/components/people/edit-roles-dialog";
 import { MergePeopleDialog } from "@/components/people/merge-people-dialog";
@@ -47,41 +48,60 @@ export default async function PeoplePage() {
       <div className="flex flex-col gap-3">
         {people.map((person) => {
           const active = person.user ? person.user.active : person.status === "ACTIVE";
+          const initials = person.name
+            .split(" ")
+            .map((p) => p[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
           return (
             <Card key={person.id}>
-              <CardContent className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{person.name}</p>
-                    {person.userId ? (
-                      <Badge variant="secondary">Has login</Badge>
-                    ) : (
-                      <Badge variant="outline">No login yet</Badge>
-                    )}
-                    {!active && <Badge variant="destructive">Inactive</Badge>}
-                  </div>
-                  {person.email && (
-                    <p className="text-sm text-muted-foreground">{person.email}</p>
-                  )}
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {person.roles.map((r) => (
-                      <Badge key={r.roleId} variant="outline">
-                        {r.role.name}
-                      </Badge>
-                    ))}
-                    {person.roles.length === 0 && (
-                      <span className="text-xs text-muted-foreground">No roles</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <EditRolesDialog
-                    personId={person.id}
-                    personName={person.name}
-                    allRoles={roles}
-                    currentRoleIds={person.roles.map((r) => r.roleId)}
+              <CardContent className="flex items-center gap-4">
+                <Avatar size="lg">
+                  <AvatarImage
+                    src={
+                      person.avatarPath
+                        ? `/api/avatars/${person.id}`
+                        : (person.user?.image ?? undefined)
+                    }
+                    alt={person.name}
                   />
-                  <ToggleActiveButton personId={person.id} active={active} />
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-1 items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{person.name}</p>
+                      {person.userId ? (
+                        <Badge variant="secondary">Has login</Badge>
+                      ) : (
+                        <Badge variant="outline">No login yet</Badge>
+                      )}
+                      {!active && <Badge variant="destructive">Inactive</Badge>}
+                    </div>
+                    {person.email && (
+                      <p className="text-sm text-muted-foreground">{person.email}</p>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {person.roles.map((r) => (
+                        <Badge key={r.roleId} variant="outline">
+                          {r.role.name}
+                        </Badge>
+                      ))}
+                      {person.roles.length === 0 && (
+                        <span className="text-xs text-muted-foreground">No roles</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <EditRolesDialog
+                      personId={person.id}
+                      personName={person.name}
+                      allRoles={roles}
+                      currentRoleIds={person.roles.map((r) => r.roleId)}
+                    />
+                    <ToggleActiveButton personId={person.id} active={active} />
+                  </div>
                 </div>
               </CardContent>
             </Card>

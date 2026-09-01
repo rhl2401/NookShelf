@@ -78,7 +78,7 @@ export function MergePeopleDialog({ people }: { people: PersonOption[] }) {
                 <SelectValue placeholder="Select person">
                   {(v: string) => {
                     const p = people.find((p) => p.id === v);
-                    return p ? personLabel(p) : undefined;
+                    return p ? personLabel(p) : "Select person";
                   }}
                 </SelectValue>
               </SelectTrigger>
@@ -98,7 +98,7 @@ export function MergePeopleDialog({ people }: { people: PersonOption[] }) {
                 <SelectValue placeholder="Select person">
                   {(v: string) => {
                     const p = people.find((p) => p.id === v);
-                    return p ? personLabel(p) : undefined;
+                    return p ? personLabel(p) : "Select person";
                   }}
                 </SelectValue>
               </SelectTrigger>

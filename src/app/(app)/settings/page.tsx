@@ -6,8 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { WebhookFormDialog } from "@/components/settings/webhook-form-dialog";
 import { WebhookRowActions } from "@/components/settings/webhook-row-actions";
 import { EmailPrefToggle } from "@/components/settings/email-pref-toggle";
+import { AvatarUploader } from "@/components/settings/avatar-uploader";
+import { PictureSizeControl } from "@/components/settings/picture-size-control";
 import { getDefaultCurrency, currencyLabel } from "@/lib/currency";
 import { DataIoCard } from "@/components/settings/data-io-card";
+import { getWorkspacePictureSize } from "@/lib/actions/workspace-settings";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -19,6 +22,7 @@ export default async function SettingsPage() {
     : null;
 
   const webhooks = canManageSettings ? await prisma.webhookEndpoint.findMany() : [];
+  const pictureSize = canManageSettings ? await getWorkspacePictureSize() : null;
 
   const providers = [
     { name: "Google", configured: Boolean(process.env.AUTH_GOOGLE_ID) },
@@ -34,6 +38,24 @@ export default async function SettingsPage() {
           Notification preferences and system configuration.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Your profile picture</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {person ? (
+            <AvatarUploader
+              personId={person.id}
+              name={person.name}
+              hasAvatar={Boolean(person.avatarPath)}
+              oauthImage={session.user.image}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">Sign in to set a profile picture.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -92,6 +114,15 @@ export default async function SettingsPage() {
                 Purchase prices entered in another currency are converted to this one for
                 display. Set via the DEFAULT_CURRENCY environment variable.
               </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Picture size</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PictureSizeControl pictureSize={pictureSize!} />
             </CardContent>
           </Card>
 

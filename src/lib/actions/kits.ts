@@ -9,6 +9,9 @@ import { writeAudit } from "@/lib/audit";
 const kitSchema = z.object({
   name: z.string().min(1).max(120),
   description: z.string().max(1000).optional(),
+  icon: z.string().max(40).optional(),
+  iconColor: z.string().max(20).optional(),
+  primaryPictureId: z.string().optional(),
   assetIds: z.array(z.string()).optional(),
 });
 
@@ -20,6 +23,9 @@ export async function createKit(input: z.infer<typeof kitSchema>) {
     data: {
       name: data.name,
       description: data.description || null,
+      icon: data.icon || null,
+      iconColor: data.iconColor || null,
+      primaryPictureId: data.primaryPictureId || null,
       members: { create: (data.assetIds ?? []).map((assetId) => ({ assetId })) },
     },
   });
@@ -36,10 +42,7 @@ export async function createKit(input: z.infer<typeof kitSchema>) {
   return kit;
 }
 
-export async function updateKit(
-  kitId: string,
-  input: { name: string; description?: string; assetIds: string[] },
-) {
+export async function updateKit(kitId: string, input: z.infer<typeof kitSchema>) {
   const session = await requirePermission("kit:manage");
   const data = kitSchema.parse(input);
 
@@ -48,7 +51,13 @@ export async function updateKit(
   const kit = await prisma.$transaction(async (tx) => {
     await tx.kit.update({
       where: { id: kitId },
-      data: { name: data.name, description: data.description || null },
+      data: {
+        name: data.name,
+        description: data.description || null,
+        icon: data.icon || null,
+        iconColor: data.iconColor || null,
+        primaryPictureId: data.primaryPictureId || null,
+      },
     });
     await tx.kitMember.deleteMany({ where: { kitId } });
     await tx.kitMember.createMany({

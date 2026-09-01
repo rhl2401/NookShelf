@@ -237,6 +237,10 @@ export function AssetFormDialog({
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Sets ownership only — it doesn&apos;t create a checkout or due date. Use Check out
+                for that.
+              </p>
             </div>
 
             <div className="col-span-2 grid gap-1.5">

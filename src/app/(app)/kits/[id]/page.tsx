@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AssetPicture } from "@/components/asset-picture";
 
 export default async function KitDetailPage({ params }: PageProps<"/kits/[id]">) {
   const { id } = await params;
@@ -29,8 +30,19 @@ export default async function KitDetailPage({ params }: PageProps<"/kits/[id]">)
         <Link href="/kits" className="text-sm text-muted-foreground hover:underline">
           ← Kits
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">{kit.name}</h1>
-        {kit.description && <p className="text-sm text-muted-foreground">{kit.description}</p>}
+        <div className="mt-1 flex items-center gap-4">
+          <AssetPicture
+            pictureId={kit.primaryPictureId}
+            icon={kit.icon}
+            color={kit.iconColor}
+            alt={kit.name}
+            size="xl"
+          />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{kit.name}</h1>
+            {kit.description && <p className="text-sm text-muted-foreground">{kit.description}</p>}
+          </div>
+        </div>
       </div>
 
       <Card>

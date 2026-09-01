@@ -11,6 +11,7 @@ export const PERMISSIONS = [
   "user:manage",
   "role:manage",
   "settings:manage",
+  "picture:share",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -28,6 +29,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "user:manage": "Manage users, people, and merges",
   "role:manage": "Create and edit roles and permissions",
   "settings:manage": "Manage system settings (OAuth, notifications, webhooks)",
+  "picture:share": "Share personal pictures to the workspace-wide picture library",
 };
 
 export const DEFAULT_ROLES: Array<{
@@ -53,6 +55,7 @@ export const DEFAULT_ROLES: Array<{
       "kit:manage",
       "checkout:view",
       "checkout:manage",
+      "picture:share",
     ],
   },
   {

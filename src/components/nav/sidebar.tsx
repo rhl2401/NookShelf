@@ -13,6 +13,7 @@ import {
   Users,
   ShieldCheck,
   Settings,
+  Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Permission } from "@/lib/permissions";
@@ -32,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/kits", label: "Kits", icon: PackageOpen, permission: "kit:view" },
   { href: "/checkouts", label: "Checkouts", icon: ArrowLeftRight, permission: "checkout:view" },
   { href: "/scan", label: "Scan", icon: ScanLine },
+  { href: "/pictures", label: "Pictures", icon: Image, permission: "asset:manage" },
   { href: "/people", label: "People", icon: Users, permission: "user:manage" },
   { href: "/roles", label: "Roles", icon: ShieldCheck, permission: "role:manage" },
   { href: "/settings", label: "Settings", icon: Settings, permission: "settings:manage" },

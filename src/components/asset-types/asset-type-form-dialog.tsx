@@ -16,24 +16,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DialogTriggerButton } from "@/components/dialog-trigger-button";
 import { FieldSchemaEditor } from "@/components/asset-types/field-schema-editor";
+import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
+import type { PictureRef } from "@/components/pictures/picture-row";
 import { createAssetType, updateAssetType } from "@/lib/actions/asset-types";
 import type { AssetFieldDef } from "@/lib/asset-fields";
 
 export function AssetTypeFormDialog({
   trigger,
   assetType,
+  myPictures,
+  workspacePictures,
 }: {
   trigger: React.ReactElement;
   assetType?: {
     id: string;
     name: string;
     category: string | null;
+    icon?: string | null;
+    iconColor?: string | null;
+    primaryPictureId?: string | null;
     fieldSchema: unknown;
   };
+  myPictures: PictureRef[];
+  workspacePictures: PictureRef[];
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(assetType?.name ?? "");
   const [category, setCategory] = useState(assetType?.category ?? "");
+  const [icon, setIcon] = useState<string | null>(assetType?.icon ?? null);
+  const [iconColor, setIconColor] = useState<string | null>(assetType?.iconColor ?? null);
+  const [pictureId, setPictureId] = useState<string | null>(assetType?.primaryPictureId ?? null);
   const [fields, setFields] = useState<AssetFieldDef[]>(
     (assetType?.fieldSchema as AssetFieldDef[] | undefined) ?? [],
   );
@@ -45,9 +57,23 @@ export function AssetTypeFormDialog({
       try {
         const cleanedFields = fields.filter((f) => f.key && f.label);
         if (assetType?.id) {
-          await updateAssetType(assetType.id, { name, category, fieldSchema: cleanedFields });
+          await updateAssetType(assetType.id, {
+            name,
+            category,
+            icon: icon ?? undefined,
+            iconColor: iconColor ?? undefined,
+            primaryPictureId: pictureId ?? undefined,
+            fieldSchema: cleanedFields,
+          });
         } else {
-          await createAssetType({ name, category, fieldSchema: cleanedFields });
+          await createAssetType({
+            name,
+            category,
+            icon: icon ?? undefined,
+            iconColor: iconColor ?? undefined,
+            primaryPictureId: pictureId ?? undefined,
+            fieldSchema: cleanedFields,
+          });
         }
         toast.success(assetType?.id ? "Asset type updated" : "Asset type created");
         setOpen(false);
@@ -84,6 +110,25 @@ export function AssetTypeFormDialog({
                 placeholder="e.g. Electronics"
               />
             </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label>Icon / picture</Label>
+            <PictureIconEditor
+              name={name || "Asset type"}
+              icon={icon}
+              onIconChange={setIcon}
+              color={iconColor}
+              onColorChange={setIconColor}
+              pictureId={pictureId}
+              onPictureChange={setPictureId}
+              myPictures={myPictures}
+              workspacePictures={workspacePictures}
+            />
+            <p className="text-xs text-muted-foreground">
+              Shown only on the asset type itself — assets of this type keep using their own
+              picture or icon, never this one.
+            </p>
           </div>
 
           <div className="grid gap-1.5">

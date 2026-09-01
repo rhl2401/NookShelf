@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { KitFormDialog } from "@/components/kits/kit-form-dialog";
 import { DeleteKitButton } from "@/components/kits/delete-kit-button";
+import { AssetPicture } from "@/components/asset-picture";
 import { CheckoutDialog } from "@/components/checkouts/checkout-dialog";
 import { ReturnCheckoutDialog } from "@/components/checkouts/return-checkout-dialog";
 import { Plus } from "lucide-react";
@@ -17,7 +18,7 @@ export default async function KitsPage() {
   const canManage = session.user.permissions.includes("kit:manage");
   const canCheckout = session.user.permissions.includes("checkout:manage");
 
-  const [kits, assets, people] = await Promise.all([
+  const [kits, assets, people, myPictures, workspacePictures] = await Promise.all([
     prisma.kit.findMany({
       include: {
         members: { include: { asset: true } },
@@ -27,6 +28,20 @@ export default async function KitsPage() {
     }),
     prisma.asset.findMany({ select: { id: true, name: true, assetTag: true }, orderBy: { name: "asc" } }),
     prisma.person.findMany({ where: { status: { not: "MERGED" } }, orderBy: { name: "asc" } }),
+    session.user.personId
+      ? prisma.picture.findMany({
+          where: { scope: "PERSONAL", ownerId: session.user.personId },
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+    prisma.picture.findMany({
+      where: { scope: "WORKSPACE" },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: { id: true, name: true },
+    }),
   ]);
 
   return (
@@ -46,6 +61,8 @@ export default async function KitsPage() {
               </Button>
             }
             assets={assets}
+            myPictures={myPictures}
+            workspacePictures={workspacePictures}
           />
         )}
       </div>
@@ -55,55 +72,69 @@ export default async function KitsPage() {
           const activeCheckout = kit.checkouts[0];
           return (
             <Card key={kit.id}>
-              <CardContent className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Link href={`/kits/${kit.id}`} className="font-medium hover:underline">
-                      {kit.name}
-                    </Link>
-                    <Badge variant="outline">{kit.members.length} assets</Badge>
-                    {activeCheckout ? (
-                      <Badge variant="secondary">
-                        Out with {activeCheckout.borrower.name} · due{" "}
-                        {activeCheckout.dueAt.toLocaleDateString()}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Available</Badge>
+              <CardContent className="flex items-center gap-4">
+                <AssetPicture
+                  pictureId={kit.primaryPictureId}
+                  icon={kit.icon}
+                  color={kit.iconColor}
+                  alt={kit.name}
+                  size="lg"
+                />
+                <div className="flex flex-1 items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/kits/${kit.id}`} className="font-medium hover:underline">
+                        {kit.name}
+                      </Link>
+                      <Badge variant="outline">{kit.members.length} assets</Badge>
+                      {activeCheckout ? (
+                        <Badge variant="secondary">
+                          Out with {activeCheckout.borrower.name} · due{" "}
+                          {activeCheckout.dueAt.toLocaleDateString()}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Available</Badge>
+                      )}
+                    </div>
+                    {kit.description && (
+                      <p className="text-sm text-muted-foreground">{kit.description}</p>
                     )}
                   </div>
-                  {kit.description && (
-                    <p className="text-sm text-muted-foreground">{kit.description}</p>
-                  )}
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  {canCheckout &&
-                    (activeCheckout ? (
-                      <ReturnCheckoutDialog
-                        checkoutId={activeCheckout.id}
-                        label={kit.name}
-                        items={kit.members.map((m) => ({ assetId: m.assetId, name: m.asset.name }))}
-                      />
-                    ) : (
-                      <CheckoutDialog
-                        target={{ kind: "kit", id: kit.id, label: kit.name }}
-                        people={people}
-                      />
-                    ))}
-                  {canManage && (
-                    <>
-                      <KitFormDialog
-                        trigger={<Button variant="outline">Edit</Button>}
-                        assets={assets}
-                        kit={{
-                          id: kit.id,
-                          name: kit.name,
-                          description: kit.description,
-                          assetIds: kit.members.map((m) => m.assetId),
-                        }}
-                      />
-                      <DeleteKitButton kitId={kit.id} />
-                    </>
-                  )}
+                  <div className="flex shrink-0 gap-2">
+                    {canCheckout &&
+                      (activeCheckout ? (
+                        <ReturnCheckoutDialog
+                          checkoutId={activeCheckout.id}
+                          label={kit.name}
+                          items={kit.members.map((m) => ({ assetId: m.assetId, name: m.asset.name }))}
+                        />
+                      ) : (
+                        <CheckoutDialog
+                          target={{ kind: "kit", id: kit.id, label: kit.name }}
+                          people={people}
+                        />
+                      ))}
+                    {canManage && (
+                      <>
+                        <KitFormDialog
+                          trigger={<Button variant="outline">Edit</Button>}
+                          assets={assets}
+                          kit={{
+                            id: kit.id,
+                            name: kit.name,
+                            description: kit.description,
+                            icon: kit.icon,
+                            iconColor: kit.iconColor,
+                            primaryPictureId: kit.primaryPictureId,
+                            assetIds: kit.members.map((m) => m.assetId),
+                          }}
+                          myPictures={myPictures}
+                          workspacePictures={workspacePictures}
+                        />
+                        <DeleteKitButton kitId={kit.id} />
+                      </>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

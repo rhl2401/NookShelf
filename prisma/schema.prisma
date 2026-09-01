@@ -89,6 +89,11 @@ model Person {
 
   emailNotificationsEnabled Boolean @default(true)
 
+  // Profile picture — a dedicated square .webp, not part of the reusable
+  // Picture library (it's personal, not meant to be attached to assets).
+  avatarPath      String?
+  avatarSizeBytes Int?
+
   // Set once this Person has an associated login.
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -102,6 +107,7 @@ model Person {
   assignedAssets     Asset[]           @relation("AssetAssignee")
   checkoutsAsBorrower Checkout[]       @relation("CheckoutBorrower")
   uploadedAttachments Attachment[]     @relation("AttachmentUploader")
+  pictures            Picture[]        @relation("PictureOwner")
   auditLogEntries     AuditLogEntry[]  @relation("AuditActor")
   notifications       Notification[]
 
@@ -153,6 +159,15 @@ model Location {
   parent   Location? @relation("LocationTree", fields: [parentId], references: [id], onDelete: Restrict)
   children Location[] @relation("LocationTree")
 
+  // Short human-assignable label/ID for physical labeling (e.g. a shelf sticker) —
+  // unlike Asset.assetTag, this is user-editable, not an immutable generated identity.
+  code String? @unique
+
+  icon             String?
+  iconColor        String? // key into the icon color palette — see src/lib/icon-colors.ts
+  primaryPictureId String?
+  primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
+
   notes  String?
   assets Asset[]
 
@@ -172,9 +187,16 @@ model AssetType {
   name        String  @unique
   category    String?
   icon        String?
+  iconColor   String? // key into the icon color palette, e.g. "blue" — see src/lib/icon-colors.ts
   isBuiltIn   Boolean @default(false)
   // Array of { key, label, type, required, options?, unit? } — see src/lib/asset-fields.ts
   fieldSchema Json    @default("[]")
+
+  // Display only for this AssetType (asset-types list/cards) — deliberately
+  // NOT inherited by its Assets, unlike icon/iconColor which Assets do fall
+  // back to when they have no picture or icon override of their own.
+  primaryPictureId String?
+  primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
 
   assets Asset[]
 
@@ -226,6 +248,13 @@ model Asset {
   vendor            String?
   warrantyExpiresAt DateTime?
 
+  // Picture: a picture from the reusable library takes precedence over an
+  // icon override, which takes precedence over the asset type's default icon.
+  icon             String?
+  iconColor        String? // key into the icon color palette, e.g. "blue" — see src/lib/icon-colors.ts
+  primaryPictureId String?
+  primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
+
   tags        AssetTag[]
   attachments Attachment[]
   kitMembers  KitMember[]
@@ -240,6 +269,7 @@ model Asset {
   @@index([locationId])
   @@index([assignedToId])
   @@index([parentAssetId])
+  @@index([primaryPictureId])
 }
 
 model Tag {
@@ -277,6 +307,54 @@ model Attachment {
 }
 
 // ---------------------------------------------------------------------------
+// Pictures — a reusable image library, decoupled from any single asset so the
+// same processed picture can be set on many assets. Personal pictures are
+// private to their owner until shared to the workspace-wide library (the
+// `picture:share` permission gates that promotion).
+// ---------------------------------------------------------------------------
+
+enum PictureScope {
+  PERSONAL
+  WORKSPACE
+}
+
+model Picture {
+  id        String       @id @default(cuid())
+  name      String?
+  scope     PictureScope @default(PERSONAL)
+  ownerId   String?
+  owner     Person?      @relation("PictureOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  path      String // relative path under the uploads volume — square .webp at the workspace's configured size
+  sizeBytes Int
+  width     Int
+  height    Int
+
+  // A fixed 64×64 companion generated alongside `path` for lists/thumbnails,
+  // so small displays don't pay for downloading the full-size image.
+  // Nullable only because pictures created before this field existed have
+  // none — the serving route falls back to `path` for those.
+  thumbPath      String?
+  thumbSizeBytes Int?
+
+  assets     Asset[]
+  assetTypes AssetType[]
+  kits       Kit[]
+  locations  Location[]
+
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
+  @@index([scope])
+}
+
+// Single-row app-wide configuration. Looked up by the fixed id "singleton".
+model WorkspaceSettings {
+  id          String   @id @default("singleton")
+  pictureSize Int      @default(512) // one of PICTURE_SIZE_OPTIONS — see src/lib/image-processing.ts
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
 // Kits — reusable named bundles of assets, and the unified Checkout system
 // that can target either a single Asset or a Kit.
 // ---------------------------------------------------------------------------
@@ -285,6 +363,11 @@ model Kit {
   id          String @id @default(cuid())
   name        String @unique
   description String?
+
+  icon             String?
+  iconColor        String? // key into the icon color palette — see src/lib/icon-colors.ts
+  primaryPictureId String?
+  primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
 
   members   KitMember[]
   checkouts Checkout[]

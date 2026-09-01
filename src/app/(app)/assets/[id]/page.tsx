@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { AssetFormDialog } from "@/components/assets/asset-form-dialog";
 import { DeleteAssetButton } from "@/components/assets/delete-asset-button";
 import { AttachmentsPanel } from "@/components/assets/attachments-panel";
+import { AssetPicture } from "@/components/asset-picture";
+import { AssetPictureEditor } from "@/components/assets/asset-picture-editor";
 import { CheckoutDialog } from "@/components/checkouts/checkout-dialog";
 import { ReturnCheckoutDialog } from "@/components/checkouts/return-checkout-dialog";
 import { assetStatusBadgeVariant, assetStatusLabel } from "@/lib/asset-status";
@@ -40,11 +42,25 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
 
   const activeCheckout = asset.checkouts[0];
 
-  const [assetTypes, tree, people, allAssets] = await Promise.all([
+  const [assetTypes, tree, people, allAssets, myPictures, workspacePictures] = await Promise.all([
     prisma.assetType.findMany({ orderBy: { name: "asc" } }),
     buildLocationTree(),
     prisma.person.findMany({ where: { status: { not: "MERGED" } }, orderBy: { name: "asc" } }),
     prisma.asset.findMany({ select: { id: true, name: true, assetTag: true } }),
+    session.user.personId
+      ? prisma.picture.findMany({
+          where: { scope: "PERSONAL", ownerId: session.user.personId },
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+    prisma.picture.findMany({
+      where: { scope: "WORKSPACE" },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: { id: true, name: true },
+    }),
   ]);
   const flatLocations = flattenLocationTree(tree);
   const fieldSchema = (asset.assetType.fieldSchema as AssetFieldDef[]) ?? [];
@@ -64,9 +80,34 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
           ← Assets
         </Link>
         <div className="mt-1 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
-            <p className="font-mono text-sm text-muted-foreground">{asset.assetTag}</p>
+          <div className="flex items-center gap-4">
+            {canManage ? (
+              <AssetPictureEditor
+                assetId={asset.id}
+                name={asset.name}
+                icon={asset.icon}
+                color={asset.iconColor}
+                typeIcon={asset.assetType.icon}
+                typeColor={asset.assetType.iconColor}
+                pictureId={asset.primaryPictureId}
+                myPictures={myPictures}
+                workspacePictures={workspacePictures}
+              />
+            ) : (
+              <AssetPicture
+                pictureId={asset.primaryPictureId}
+                icon={asset.icon}
+                color={asset.iconColor}
+                typeIcon={asset.assetType.icon}
+                typeColor={asset.assetType.iconColor}
+                alt={asset.name}
+                size="xl"
+              />
+            )}
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
+              <p className="font-mono text-sm text-muted-foreground">{asset.assetTag}</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button

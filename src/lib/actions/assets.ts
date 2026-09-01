@@ -309,3 +309,28 @@ export async function deleteAttachment(attachmentId: string) {
   await deleteStoredFile(attachment.path);
   revalidatePath(`/assets/${attachment.assetId}`);
 }
+
+export async function setAssetIcon(
+  assetId: string,
+  data: { icon?: string | null; iconColor?: string | null },
+) {
+  const session = await requirePermission("asset:manage");
+  const before = await prisma.asset.findUniqueOrThrow({ where: { id: assetId } });
+  const asset = await prisma.asset.update({
+    where: { id: assetId },
+    data: {
+      ...(data.icon !== undefined ? { icon: data.icon } : {}),
+      ...(data.iconColor !== undefined ? { iconColor: data.iconColor } : {}),
+    },
+  });
+  await writeAudit({
+    entityType: "Asset",
+    entityId: assetId,
+    action: "UPDATE",
+    actorId: session.user.personId,
+    before: { icon: before.icon, iconColor: before.iconColor },
+    after: { icon: asset.icon, iconColor: asset.iconColor },
+  });
+  revalidatePath(`/assets/${assetId}`);
+}
+
