@@ -89,6 +89,11 @@ model Person {
 
   emailNotificationsEnabled Boolean @default(true)
 
+  // Profile picture — a dedicated square .webp, not part of the reusable
+  // Picture library (it's personal, not meant to be attached to assets).
+  avatarPath      String?
+  avatarSizeBytes Int?
+
   // Set once this Person has an associated login.
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -177,6 +182,12 @@ model AssetType {
   isBuiltIn   Boolean @default(false)
   // Array of { key, label, type, required, options?, unit? } — see src/lib/asset-fields.ts
   fieldSchema Json    @default("[]")
+
+  // Display only for this AssetType (asset-types list/cards) — deliberately
+  // NOT inherited by its Assets, unlike icon/iconColor which Assets do fall
+  // back to when they have no picture or icon override of their own.
+  primaryPictureId String?
+  primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
 
   assets Asset[]
 
@@ -309,7 +320,9 @@ model Picture {
   width     Int
   height    Int
 
-  assets Asset[]
+  assets     Asset[]
+  assetTypes AssetType[]
+  kits       Kit[]
 
   createdAt DateTime @default(now())
 
@@ -326,6 +339,11 @@ model Kit {
   id          String @id @default(cuid())
   name        String @unique
   description String?
+
+  icon             String?
+  iconColor        String? // key into the icon color palette — see src/lib/icon-colors.ts
+  primaryPictureId String?
+  primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
 
   members   KitMember[]
   checkouts Checkout[]

@@ -35,6 +35,18 @@ export async function savePictureFile(buffer: Buffer) {
   return relativePath;
 }
 
+/** Saves a processed avatar buffer under uploads/avatars/, returning the relative path stored on Person.avatarPath. */
+export async function saveAvatarFile(buffer: Buffer) {
+  const dir = path.join(uploadsRoot(), "avatars");
+  await mkdir(dir, { recursive: true });
+
+  const filename = `${crypto.randomUUID()}.webp`;
+  const relativePath = path.join("avatars", filename);
+  await writeFile(path.join(uploadsRoot(), relativePath), buffer);
+
+  return relativePath;
+}
+
 export async function deleteStoredFile(relativePath: string) {
   try {
     await unlink(path.join(/* turbopackIgnore: true */ uploadsRoot(), relativePath));

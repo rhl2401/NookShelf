@@ -17,20 +17,38 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DialogTriggerButton } from "@/components/dialog-trigger-button";
 import { AssetPicker, type PickableAsset } from "@/components/kits/asset-picker";
+import { IconPicker } from "@/components/icon-picker";
+import { PicturePicker } from "@/components/pictures/picture-picker";
+import type { PictureRef } from "@/components/pictures/picture-row";
 import { createKit, updateKit } from "@/lib/actions/kits";
 
 export function KitFormDialog({
   trigger,
   assets,
   kit,
+  myPictures,
+  workspacePictures,
 }: {
   trigger: React.ReactElement;
   assets: PickableAsset[];
-  kit?: { id: string; name: string; description: string | null; assetIds: string[] };
+  kit?: {
+    id: string;
+    name: string;
+    description: string | null;
+    icon?: string | null;
+    iconColor?: string | null;
+    primaryPictureId?: string | null;
+    assetIds: string[];
+  };
+  myPictures: PictureRef[];
+  workspacePictures: PictureRef[];
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(kit?.name ?? "");
   const [description, setDescription] = useState(kit?.description ?? "");
+  const [icon, setIcon] = useState<string | null>(kit?.icon ?? null);
+  const [iconColor, setIconColor] = useState<string | null>(kit?.iconColor ?? null);
+  const [pictureId, setPictureId] = useState<string | null>(kit?.primaryPictureId ?? null);
   const [selected, setSelected] = useState<Set<string>>(new Set(kit?.assetIds ?? []));
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -38,7 +56,14 @@ export function KitFormDialog({
   function submit() {
     startTransition(async () => {
       try {
-        const input = { name, description, assetIds: Array.from(selected) };
+        const input = {
+          name,
+          description,
+          icon: icon ?? undefined,
+          iconColor: iconColor ?? undefined,
+          primaryPictureId: pictureId ?? undefined,
+          assetIds: Array.from(selected),
+        };
         if (kit?.id) {
           await updateKit(kit.id, input);
         } else {
@@ -64,7 +89,7 @@ export function KitFormDialog({
             rig, anything you assemble more than once.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4">
+        <div className="flex max-h-[65vh] flex-col gap-4 overflow-y-auto pr-1">
           <div className="grid gap-1.5">
             <Label>Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -76,6 +101,26 @@ export function KitFormDialog({
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Icon</Label>
+              <IconPicker
+                value={icon}
+                onChange={setIcon}
+                color={iconColor}
+                onColorChange={setIconColor}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Picture</Label>
+              <PicturePicker
+                value={pictureId}
+                onChange={setPictureId}
+                myPictures={myPictures}
+                workspacePictures={workspacePictures}
+              />
+            </div>
           </div>
           <div className="grid gap-1.5">
             <Label>Assets in this kit</Label>

@@ -17,12 +17,16 @@ import { Label } from "@/components/ui/label";
 import { DialogTriggerButton } from "@/components/dialog-trigger-button";
 import { FieldSchemaEditor } from "@/components/asset-types/field-schema-editor";
 import { IconPicker } from "@/components/icon-picker";
+import { PicturePicker } from "@/components/pictures/picture-picker";
+import type { PictureRef } from "@/components/pictures/picture-row";
 import { createAssetType, updateAssetType } from "@/lib/actions/asset-types";
 import type { AssetFieldDef } from "@/lib/asset-fields";
 
 export function AssetTypeFormDialog({
   trigger,
   assetType,
+  myPictures,
+  workspacePictures,
 }: {
   trigger: React.ReactElement;
   assetType?: {
@@ -31,14 +35,18 @@ export function AssetTypeFormDialog({
     category: string | null;
     icon?: string | null;
     iconColor?: string | null;
+    primaryPictureId?: string | null;
     fieldSchema: unknown;
   };
+  myPictures: PictureRef[];
+  workspacePictures: PictureRef[];
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(assetType?.name ?? "");
   const [category, setCategory] = useState(assetType?.category ?? "");
   const [icon, setIcon] = useState<string | null>(assetType?.icon ?? null);
   const [iconColor, setIconColor] = useState<string | null>(assetType?.iconColor ?? null);
+  const [pictureId, setPictureId] = useState<string | null>(assetType?.primaryPictureId ?? null);
   const [fields, setFields] = useState<AssetFieldDef[]>(
     (assetType?.fieldSchema as AssetFieldDef[] | undefined) ?? [],
   );
@@ -55,6 +63,7 @@ export function AssetTypeFormDialog({
             category,
             icon: icon ?? undefined,
             iconColor: iconColor ?? undefined,
+            primaryPictureId: pictureId ?? undefined,
             fieldSchema: cleanedFields,
           });
         } else {
@@ -63,6 +72,7 @@ export function AssetTypeFormDialog({
             category,
             icon: icon ?? undefined,
             iconColor: iconColor ?? undefined,
+            primaryPictureId: pictureId ?? undefined,
             fieldSchema: cleanedFields,
           });
         }
@@ -103,15 +113,30 @@ export function AssetTypeFormDialog({
             </div>
           </div>
 
-          <div className="grid gap-1.5">
-            <Label>Icon</Label>
-            <IconPicker
-              value={icon}
-              onChange={setIcon}
-              color={iconColor}
-              onColorChange={setIconColor}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Icon</Label>
+              <IconPicker
+                value={icon}
+                onChange={setIcon}
+                color={iconColor}
+                onColorChange={setIconColor}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Picture</Label>
+              <PicturePicker
+                value={pictureId}
+                onChange={setPictureId}
+                myPictures={myPictures}
+                workspacePictures={workspacePictures}
+              />
+            </div>
           </div>
+          <p className="-mt-2 text-xs text-muted-foreground">
+            This picture is shown only on the asset type itself — assets of this type keep using
+            their own picture or icon, never this one.
+          </p>
 
           <div className="grid gap-1.5">
             <Label>Custom fields</Label>

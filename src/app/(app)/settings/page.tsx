@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { WebhookFormDialog } from "@/components/settings/webhook-form-dialog";
 import { WebhookRowActions } from "@/components/settings/webhook-row-actions";
 import { EmailPrefToggle } from "@/components/settings/email-pref-toggle";
+import { AvatarUploader } from "@/components/settings/avatar-uploader";
 import { getDefaultCurrency, currencyLabel } from "@/lib/currency";
 import { DataIoCard } from "@/components/settings/data-io-card";
 
@@ -34,6 +35,19 @@ export default async function SettingsPage() {
           Notification preferences and system configuration.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Your profile picture</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {person ? (
+            <AvatarUploader personId={person.id} name={person.name} hasAvatar={Boolean(person.avatarPath)} />
+          ) : (
+            <p className="text-sm text-muted-foreground">Sign in to set a profile picture.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

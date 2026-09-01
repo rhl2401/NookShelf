@@ -3,8 +3,72 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requirePermission } from "@/lib/auth-helpers";
+import { requirePermission, requireSession } from "@/lib/auth-helpers";
 import { writeAudit } from "@/lib/audit";
+import { processPictureUpload, AVATAR_SIZE } from "@/lib/image-processing";
+import { saveAvatarFile, deleteStoredFile } from "@/lib/storage";
+
+const MAX_AVATAR_BYTES = 20 * 1024 * 1024;
+
+async function requireSelfOrUserManage(personId: string) {
+  const session = await requireSession();
+  if (session.user.personId === personId) return session;
+  return requirePermission("user:manage");
+}
+
+export async function uploadAvatar(personId: string, formData: FormData) {
+  const session = await requireSelfOrUserManage(personId);
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) throw new Error("No file provided.");
+  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+  if (file.size > MAX_AVATAR_BYTES) throw new Error("File is too large (max 20MB).");
+
+  const before = await prisma.person.findUniqueOrThrow({ where: { id: personId } });
+  const input = Buffer.from(await file.arrayBuffer());
+  const { buffer } = await processPictureUpload(input, AVATAR_SIZE);
+  const relativePath = await saveAvatarFile(buffer);
+
+  await prisma.person.update({
+    where: { id: personId },
+    data: { avatarPath: relativePath, avatarSizeBytes: buffer.byteLength },
+  });
+  if (before.avatarPath) await deleteStoredFile(before.avatarPath);
+
+  await writeAudit({
+    entityType: "Person",
+    entityId: personId,
+    action: "UPDATE",
+    actorId: session.user.personId,
+    after: { avatarUpdated: true },
+  });
+
+  revalidatePath("/settings");
+  revalidatePath("/people");
+}
+
+export async function removeAvatar(personId: string) {
+  const session = await requireSelfOrUserManage(personId);
+  const person = await prisma.person.findUniqueOrThrow({ where: { id: personId } });
+  if (!person.avatarPath) return;
+
+  await prisma.person.update({
+    where: { id: personId },
+    data: { avatarPath: null, avatarSizeBytes: null },
+  });
+  await deleteStoredFile(person.avatarPath);
+
+  await writeAudit({
+    entityType: "Person",
+    entityId: personId,
+    action: "UPDATE",
+    actorId: session.user.personId,
+    after: { avatarUpdated: false },
+  });
+
+  revalidatePath("/settings");
+  revalidatePath("/people");
+}
 
 const personSchema = z.object({
   name: z.string().min(1).max(120),

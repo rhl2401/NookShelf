@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { AssetTypeFormDialog } from "@/components/asset-types/asset-type-form-dialog";
 import { DeleteAssetTypeButton } from "@/components/asset-types/delete-asset-type-button";
-import { AssetTypeIcon } from "@/components/asset-type-icon";
+import { AssetPicture } from "@/components/asset-picture";
 import type { AssetFieldDef } from "@/lib/asset-fields";
 import { Plus } from "lucide-react";
 
@@ -14,10 +14,26 @@ export default async function AssetTypesPage() {
   const session = await auth();
   if (!session?.user.permissions.includes("asset-type:manage")) redirect("/dashboard");
 
-  const assetTypes = await prisma.assetType.findMany({
-    include: { _count: { select: { assets: true } } },
-    orderBy: { name: "asc" },
-  });
+  const [assetTypes, myPictures, workspacePictures] = await Promise.all([
+    prisma.assetType.findMany({
+      include: { _count: { select: { assets: true } } },
+      orderBy: { name: "asc" },
+    }),
+    session.user.personId
+      ? prisma.picture.findMany({
+          where: { scope: "PERSONAL", ownerId: session.user.personId },
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+    prisma.picture.findMany({
+      where: { scope: "WORKSPACE" },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: { id: true, name: true },
+    }),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
@@ -34,6 +50,8 @@ export default async function AssetTypesPage() {
               <Plus /> New asset type
             </Button>
           }
+          myPictures={myPictures}
+          workspacePictures={workspacePictures}
         />
       </div>
 
@@ -44,7 +62,13 @@ export default async function AssetTypesPage() {
             <Card key={assetType.id}>
               <CardContent className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <AssetTypeIcon icon={assetType.icon} color={assetType.iconColor} size="lg" />
+                  <AssetPicture
+                    pictureId={assetType.primaryPictureId}
+                    icon={assetType.icon}
+                    color={assetType.iconColor}
+                    alt={assetType.name}
+                    size="lg"
+                  />
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{assetType.name}</p>
@@ -70,6 +94,8 @@ export default async function AssetTypesPage() {
                   <AssetTypeFormDialog
                     assetType={assetType}
                     trigger={<Button variant="outline">Edit</Button>}
+                    myPictures={myPictures}
+                    workspacePictures={workspacePictures}
                   />
                   {!assetType.isBuiltIn && (
                     <DeleteAssetTypeButton assetTypeId={assetType.id} />

@@ -25,6 +25,7 @@ const assetTypeSchema = z.object({
   category: z.string().max(80).optional(),
   icon: z.string().max(40).optional(),
   iconColor: z.string().max(20).optional(),
+  primaryPictureId: z.string().optional(),
   fieldSchema: z.array(fieldDefSchema),
 });
 
@@ -38,6 +39,7 @@ export async function createAssetType(input: z.infer<typeof assetTypeSchema>) {
       category: data.category || null,
       icon: data.icon || null,
       iconColor: data.iconColor || null,
+      primaryPictureId: data.primaryPictureId || null,
       fieldSchema: data.fieldSchema,
     },
   });
@@ -69,6 +71,7 @@ export async function updateAssetType(
       category: data.category || null,
       icon: data.icon || null,
       iconColor: data.iconColor || null,
+      primaryPictureId: data.primaryPictureId || null,
       fieldSchema: data.fieldSchema,
     },
   });

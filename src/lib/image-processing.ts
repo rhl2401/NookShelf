@@ -2,6 +2,7 @@ import "server-only";
 import sharp from "sharp";
 
 export const PICTURE_SIZE = 640;
+export const AVATAR_SIZE = 256;
 const WEBP_QUALITY = 82;
 
 /** Center-crops to a square, downscales, and re-encodes as webp. */
