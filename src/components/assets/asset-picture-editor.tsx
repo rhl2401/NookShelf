@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ImagePlus, Pencil } from "lucide-react";
@@ -11,7 +12,10 @@ import { Separator } from "@/components/ui/separator";
 import { IconGrid } from "@/components/icon-grid";
 import { AssetPicture } from "@/components/asset-picture";
 import { PICTURE_CONTAINER_SIZE } from "@/components/asset-type-icon";
-import { setAssetIcon, setAssetPrimaryPhoto, removeAssetPrimaryPhoto } from "@/lib/actions/assets";
+import { PictureSearchPanel } from "@/components/pictures/picture-search-panel";
+import type { PictureRef } from "@/components/pictures/picture-row";
+import { setAssetIcon } from "@/lib/actions/assets";
+import { applyExistingPicture, removePictureFromAsset } from "@/lib/actions/pictures";
 import { cn } from "@/lib/utils";
 
 export function AssetPictureEditor({
@@ -21,7 +25,9 @@ export function AssetPictureEditor({
   color,
   typeIcon,
   typeColor,
-  photoAttachmentId,
+  pictureId,
+  myPictures,
+  workspacePictures,
 }: {
   assetId: string;
   name: string;
@@ -29,28 +35,24 @@ export function AssetPictureEditor({
   color: string | null;
   typeIcon: string | null;
   typeColor: string | null;
-  photoAttachmentId: string | null;
+  pictureId: string | null;
+  myPictures: PictureRef[];
+  workspacePictures: PictureRef[];
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const hasPicture = Boolean(photoAttachmentId || icon || typeIcon);
+  const hasPicture = Boolean(pictureId || icon || typeIcon);
 
-  function uploadPhoto() {
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.set("file", file);
+  function usePicture(id: string) {
     startTransition(async () => {
       try {
-        await setAssetPrimaryPhoto(assetId, formData);
+        await applyExistingPicture(assetId, id);
         toast.success("Photo updated");
-        if (fileInputRef.current) fileInputRef.current.value = "";
         setOpen(false);
         router.refresh();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Upload failed");
+        toast.error(err instanceof Error ? err.message : "Couldn't set picture");
       }
     });
   }
@@ -58,7 +60,7 @@ export function AssetPictureEditor({
   function removePhoto() {
     startTransition(async () => {
       try {
-        await removeAssetPrimaryPhoto(assetId);
+        await removePictureFromAsset(assetId);
         toast.success("Photo removed");
         router.refresh();
       } catch (err) {
@@ -103,7 +105,7 @@ export function AssetPictureEditor({
         {hasPicture ? (
           <>
             <AssetPicture
-              photoAttachmentId={photoAttachmentId}
+              pictureId={pictureId}
               icon={icon}
               color={color}
               typeIcon={typeIcon}
@@ -133,14 +135,13 @@ export function AssetPictureEditor({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 gap-3 p-3">
         <div className="flex flex-col gap-1.5">
-          <Label>Photo</Label>
-          <div className="flex items-center gap-2">
-            <input ref={fileInputRef} type="file" accept="image/*" className="min-w-0 flex-1 text-xs" />
-            <Button size="sm" variant="outline" onClick={uploadPhoto} disabled={isPending}>
-              Upload
-            </Button>
+          <div className="flex items-center justify-between">
+            <Label>Photo</Label>
+            <Link href="/pictures" className="text-xs text-muted-foreground hover:underline">
+              Manage pictures
+            </Link>
           </div>
-          {photoAttachmentId && (
+          {pictureId && (
             <Button
               size="sm"
               variant="ghost"
@@ -151,6 +152,12 @@ export function AssetPictureEditor({
               Remove photo
             </Button>
           )}
+          <PictureSearchPanel
+            myPictures={myPictures}
+            workspacePictures={workspacePictures}
+            onSelect={usePicture}
+            disabled={isPending}
+          />
         </div>
 
         <Separator />

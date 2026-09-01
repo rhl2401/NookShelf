@@ -34,7 +34,7 @@ type AssetRow = {
   status: string;
   icon: string | null;
   iconColor: string | null;
-  primaryPhotoId: string | null;
+  primaryPictureId: string | null;
   assetType: { name: string; icon: string | null; iconColor: string | null };
   location: { id: string; name: string } | null;
   assignedTo: { id: string; name: string } | null;
@@ -208,7 +208,7 @@ export function AssetsTable({
                 <TableCell>
                   <Link href={`/assets/${asset.id}`} className="flex items-center gap-2 hover:underline">
                     <AssetPicture
-                      photoAttachmentId={asset.primaryPhotoId}
+                      pictureId={asset.primaryPictureId}
                       icon={asset.icon}
                       color={asset.iconColor}
                       typeIcon={asset.assetType.icon}

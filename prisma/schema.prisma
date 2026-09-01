@@ -102,6 +102,7 @@ model Person {
   assignedAssets     Asset[]           @relation("AssetAssignee")
   checkoutsAsBorrower Checkout[]       @relation("CheckoutBorrower")
   uploadedAttachments Attachment[]     @relation("AttachmentUploader")
+  pictures            Picture[]        @relation("PictureOwner")
   auditLogEntries     AuditLogEntry[]  @relation("AuditActor")
   notifications       Notification[]
 
@@ -227,12 +228,12 @@ model Asset {
   vendor            String?
   warrantyExpiresAt DateTime?
 
-  // Picture: an uploaded photo takes precedence over an icon override, which
-  // takes precedence over the asset type's default icon.
-  icon           String?
-  iconColor      String? // key into the icon color palette, e.g. "blue" — see src/lib/icon-colors.ts
-  primaryPhotoId String?     @unique
-  primaryPhoto   Attachment? @relation("AssetPrimaryPhoto", fields: [primaryPhotoId], references: [id], onDelete: SetNull)
+  // Picture: a picture from the reusable library takes precedence over an
+  // icon override, which takes precedence over the asset type's default icon.
+  icon             String?
+  iconColor        String? // key into the icon color palette, e.g. "blue" — see src/lib/icon-colors.ts
+  primaryPictureId String?
+  primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
 
   tags        AssetTag[]
   attachments Attachment[]
@@ -248,6 +249,7 @@ model Asset {
   @@index([locationId])
   @@index([assignedToId])
   @@index([parentAssetId])
+  @@index([primaryPictureId])
 }
 
 model Tag {
@@ -279,11 +281,40 @@ model Attachment {
   uploadedById String?
   uploadedBy   Person? @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
 
-  primaryPhotoOfAsset Asset? @relation("AssetPrimaryPhoto")
-
   createdAt DateTime @default(now())
 
   @@index([assetId])
+}
+
+// ---------------------------------------------------------------------------
+// Pictures — a reusable image library, decoupled from any single asset so the
+// same processed picture can be set on many assets. Personal pictures are
+// private to their owner until shared to the workspace-wide library (the
+// `picture:share` permission gates that promotion).
+// ---------------------------------------------------------------------------
+
+enum PictureScope {
+  PERSONAL
+  WORKSPACE
+}
+
+model Picture {
+  id        String       @id @default(cuid())
+  name      String?
+  scope     PictureScope @default(PERSONAL)
+  ownerId   String?
+  owner     Person?      @relation("PictureOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  path      String // relative path under the uploads volume — always a square .webp
+  sizeBytes Int
+  width     Int
+  height    Int
+
+  assets Asset[]
+
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
+  @@index([scope])
 }
 
 // ---------------------------------------------------------------------------

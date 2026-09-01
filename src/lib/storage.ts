@@ -23,6 +23,18 @@ export async function saveAssetAttachment(assetId: string, file: File) {
   return relativePath;
 }
 
+/** Saves a processed picture buffer under uploads/pictures/, returning the relative path stored on Picture.path. */
+export async function savePictureFile(buffer: Buffer) {
+  const dir = path.join(uploadsRoot(), "pictures");
+  await mkdir(dir, { recursive: true });
+
+  const filename = `${crypto.randomUUID()}.webp`;
+  const relativePath = path.join("pictures", filename);
+  await writeFile(path.join(uploadsRoot(), relativePath), buffer);
+
+  return relativePath;
+}
+
 export async function deleteStoredFile(relativePath: string) {
   try {
     await unlink(path.join(/* turbopackIgnore: true */ uploadsRoot(), relativePath));

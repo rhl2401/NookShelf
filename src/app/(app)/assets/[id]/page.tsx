@@ -42,11 +42,25 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
 
   const activeCheckout = asset.checkouts[0];
 
-  const [assetTypes, tree, people, allAssets] = await Promise.all([
+  const [assetTypes, tree, people, allAssets, myPictures, workspacePictures] = await Promise.all([
     prisma.assetType.findMany({ orderBy: { name: "asc" } }),
     buildLocationTree(),
     prisma.person.findMany({ where: { status: { not: "MERGED" } }, orderBy: { name: "asc" } }),
     prisma.asset.findMany({ select: { id: true, name: true, assetTag: true } }),
+    session.user.personId
+      ? prisma.picture.findMany({
+          where: { scope: "PERSONAL", ownerId: session.user.personId },
+          orderBy: { createdAt: "desc" },
+          take: 12,
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+    prisma.picture.findMany({
+      where: { scope: "WORKSPACE" },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: { id: true, name: true },
+    }),
   ]);
   const flatLocations = flattenLocationTree(tree);
   const fieldSchema = (asset.assetType.fieldSchema as AssetFieldDef[]) ?? [];
@@ -75,11 +89,13 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                 color={asset.iconColor}
                 typeIcon={asset.assetType.icon}
                 typeColor={asset.assetType.iconColor}
-                photoAttachmentId={asset.primaryPhotoId}
+                pictureId={asset.primaryPictureId}
+                myPictures={myPictures}
+                workspacePictures={workspacePictures}
               />
             ) : (
               <AssetPicture
-                photoAttachmentId={asset.primaryPhotoId}
+                pictureId={asset.primaryPictureId}
                 icon={asset.icon}
                 color={asset.iconColor}
                 typeIcon={asset.assetType.icon}
