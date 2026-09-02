@@ -4,6 +4,8 @@ import { jsonToBundle } from "@/lib/data-io/json-format";
 import { csvZipToBundle } from "@/lib/data-io/csv-format";
 import { xlsxToBundle } from "@/lib/data-io/xlsx-format";
 
+const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user.permissions.includes("settings:manage")) {
@@ -15,6 +17,9 @@ export async function POST(req: Request) {
   const format = String(formData.get("format") || "");
   if (!(file instanceof File)) {
     return Response.json({ error: "No file provided." }, { status: 400 });
+  }
+  if (file.size > MAX_IMPORT_BYTES) {
+    return Response.json({ error: "File is too large (max 20MB)." }, { status: 400 });
   }
 
   try {

@@ -4,6 +4,7 @@ import {
   type ExportBundle,
   type AssetRow,
 } from "@/lib/data-io/types";
+import { sanitizeRow } from "@/lib/data-io/sanitize-cell";
 
 function addSheet(
   workbook: ExcelJS.Workbook,
@@ -27,19 +28,21 @@ export async function bundleToXlsx(bundle: ExportBundle): Promise<Buffer> {
     workbook,
     "Locations",
     ["path", "notes"],
-    bundle.locations.map((l) => ({ path: l.path, notes: l.notes ?? "" })),
+    bundle.locations.map((l) => sanitizeRow({ path: l.path, notes: l.notes ?? "" })),
   );
 
   addSheet(
     workbook,
     "AssetTypes",
     ["name", "category", "icon", "fieldSchemaJson"],
-    bundle.assetTypes.map((t) => ({
-      name: t.name,
-      category: t.category ?? "",
-      icon: t.icon ?? "",
-      fieldSchemaJson: JSON.stringify(t.fieldSchema ?? []),
-    })),
+    bundle.assetTypes.map((t) =>
+      sanitizeRow({
+        name: t.name,
+        category: t.category ?? "",
+        icon: t.icon ?? "",
+        fieldSchemaJson: JSON.stringify(t.fieldSchema ?? []),
+      }),
+    ),
   );
 
   addSheet(
@@ -62,34 +65,38 @@ export async function bundleToXlsx(bundle: ExportBundle): Promise<Buffer> {
       "tags",
       "customFieldsJson",
     ],
-    bundle.assets.map((a) => ({
-      assetTag: a.assetTag,
-      name: a.name,
-      assetType: a.assetType,
-      location: a.location ?? "",
-      assignedToEmail: a.assignedToEmail ?? "",
-      parentAssetTag: a.parentAssetTag ?? "",
-      status: a.status ?? "",
-      notes: a.notes ?? "",
-      purchaseDate: a.purchaseDate ?? "",
-      purchasePrice: a.purchasePrice != null ? String(a.purchasePrice) : "",
-      purchaseCurrency: a.purchaseCurrency ?? "",
-      vendor: a.vendor ?? "",
-      warrantyExpiresAt: a.warrantyExpiresAt ?? "",
-      tags: (a.tags ?? []).join("|"),
-      customFieldsJson: JSON.stringify(a.customFields ?? {}),
-    })),
+    bundle.assets.map((a) =>
+      sanitizeRow({
+        assetTag: a.assetTag,
+        name: a.name,
+        assetType: a.assetType,
+        location: a.location ?? "",
+        assignedToEmail: a.assignedToEmail ?? "",
+        parentAssetTag: a.parentAssetTag ?? "",
+        status: a.status ?? "",
+        notes: a.notes ?? "",
+        purchaseDate: a.purchaseDate ?? "",
+        purchasePrice: a.purchasePrice != null ? String(a.purchasePrice) : "",
+        purchaseCurrency: a.purchaseCurrency ?? "",
+        vendor: a.vendor ?? "",
+        warrantyExpiresAt: a.warrantyExpiresAt ?? "",
+        tags: (a.tags ?? []).join("|"),
+        customFieldsJson: JSON.stringify(a.customFields ?? {}),
+      }),
+    ),
   );
 
   addSheet(
     workbook,
     "Kits",
     ["name", "description", "memberAssetTags"],
-    bundle.kits.map((k) => ({
-      name: k.name,
-      description: k.description ?? "",
-      memberAssetTags: (k.memberAssetTags ?? []).join("|"),
-    })),
+    bundle.kits.map((k) =>
+      sanitizeRow({
+        name: k.name,
+        description: k.description ?? "",
+        memberAssetTags: (k.memberAssetTags ?? []).join("|"),
+      }),
+    ),
   );
 
   const readme = workbook.addWorksheet("README");

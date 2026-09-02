@@ -8,10 +8,13 @@ import { generateAssetTag } from "@/lib/asset-tag";
 import { getDefaultCurrency } from "@/lib/currency";
 import { revalidatePath } from "next/cache";
 
+const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
+
 export async function importAssetsCsv(formData: FormData) {
   const session = await requirePermission("asset:manage");
   const file = formData.get("file");
   if (!(file instanceof File)) throw new Error("No file provided.");
+  if (file.size > MAX_IMPORT_BYTES) throw new Error("File is too large (max 20MB).");
 
   const text = await file.text();
   const parsed = Papa.parse<Record<string, string>>(text, {

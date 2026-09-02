@@ -8,6 +8,7 @@ import { writeAudit } from "@/lib/audit";
 import { generateAssetTag } from "@/lib/asset-tag";
 import { validateCustomFields, type AssetFieldDef } from "@/lib/asset-fields";
 import { saveAssetAttachment, deleteStoredFile } from "@/lib/storage";
+import { ALLOWED_ATTACHMENT_MIME_TYPES } from "@/lib/attachment-types";
 import type { Prisma } from "@/generated/prisma/client";
 
 const assetSchema = z.object({
@@ -296,6 +297,9 @@ export async function uploadAttachment(assetId: string, formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("No file provided.");
   if (file.size > 20 * 1024 * 1024) throw new Error("File is too large (max 20MB).");
+  if (!ALLOWED_ATTACHMENT_MIME_TYPES.has(file.type)) {
+    throw new Error("Unsupported file type.");
+  }
 
   const relativePath = await saveAssetAttachment(assetId, file);
   const kind = file.type.startsWith("image/") ? "photo" : "document";

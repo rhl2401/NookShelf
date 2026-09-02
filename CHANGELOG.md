@@ -8,6 +8,32 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.0.0
+
+Security hardening from a full OWASP Top 10 audit.
+
+- Asset attachment uploads are now restricted to an allow-list of common image/document MIME
+  types (previously any file type was accepted and served back with `Content-Disposition: inline`,
+  a stored-XSS vector); non-safe-to-render types are now always served as a download regardless
+  of their stored MIME type.
+- Added baseline security response headers (Content-Security-Policy, X-Frame-Options,
+  X-Content-Type-Options, Referrer-Policy, Strict-Transport-Security) across the app.
+- CSV/XLSX exports (single-asset export and full data export) now neutralize values that could be
+  interpreted as spreadsheet formulas (CSV/formula injection) when opened in Excel or similar.
+- The bulk data-import endpoint and the simple assets-CSV import now enforce a 20MB upload limit,
+  matching every other upload path in the app.
+- Closed a path-traversal gap in attachment storage (write path lacked the containment check the
+  read path already had) and an authorization gap on the `/a/<assetTag>` and avatar-serving routes
+  (now require `asset:view` like every other asset/file-serving route).
+- `scripts/backup.sh` now restricts backup directory permissions to the owner.
+- **Breaking change**: `docker-compose.yml` no longer falls back to a hardcoded default Postgres
+  password (`assetmgmt`), and the Postgres port is now published to `127.0.0.1` only instead of
+  all host interfaces.
+  - **Migration steps**: set `POSTGRES_PASSWORD` in your `.env` file before running
+    `docker compose up` (see the updated `.env.example`); if you were relying on connecting to
+    Postgres from another host over the network, that's no longer possible by default — tunnel
+    over SSH or explicitly change the port binding in `docker-compose.yml` instead.
+
 ## 0.4.0
 
 - Documented, scripted upgrade path for self-hosted instances: `scripts/backup.sh` dumps the

@@ -11,8 +11,9 @@ TypeScript, Next.js (App Router), PostgreSQL via Prisma 7 (`@prisma/adapter-pg`)
 
 ## Running with Docker (recommended)
 
-1. Copy `.env.example` to `.env` and fill in at least `AUTH_SECRET` (generate one with
-   `openssl rand -base64 32`) and one OAuth provider's credentials.
+1. Copy `.env.example` to `.env` and fill in at least `POSTGRES_PASSWORD` and `AUTH_SECRET`
+   (generate both with `openssl rand -base64 32`, for example) and one OAuth provider's
+   credentials.
 2. `docker compose up -d --build`
 3. Open http://localhost:3000 — the first person to sign in becomes Admin automatically.
 
