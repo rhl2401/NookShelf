@@ -1,4 +1,7 @@
-![NookShelf](public/nookshelf-wordmark.png)
+<p align="center">
+  <img src="public/nookshelf-icon.png" alt="" height="56">
+  <img src="public/nookshelf-wordmark.png" alt="NookShelf" height="44">
+</p>
 
 Self-hosted asset tracking for home and small-team use — locations, asset types with custom
 fields (cables included), kits, checkout/return, QR labeling, and notifications. See
