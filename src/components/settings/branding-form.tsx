@@ -255,7 +255,7 @@ export function BrandingForm({
           <Input
             value={accent}
             onChange={(e) => setAccent(e.target.value)}
-            placeholder="Default (monochrome)"
+            placeholder="#3b82f6"
             aria-invalid={accentInvalid}
             className="w-36 font-mono"
           />
