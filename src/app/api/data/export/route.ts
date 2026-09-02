@@ -19,7 +19,7 @@ export async function GET(req: Request) {
       return new Response(bundleToJson(bundle), {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
-          "Content-Disposition": `attachment; filename="asset-management-export-${stamp}.json"`,
+          "Content-Disposition": `attachment; filename="nookshelf-export-${stamp}.json"`,
         },
       });
     case "csv": {
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       return new Response(new Uint8Array(zip), {
         headers: {
           "Content-Type": "application/zip",
-          "Content-Disposition": `attachment; filename="asset-management-export-${stamp}-csv.zip"`,
+          "Content-Disposition": `attachment; filename="nookshelf-export-${stamp}-csv.zip"`,
         },
       });
     }
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
       return new Response(new Uint8Array(xlsx), {
         headers: {
           "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          "Content-Disposition": `attachment; filename="asset-management-export-${stamp}.xlsx"`,
+          "Content-Disposition": `attachment; filename="nookshelf-export-${stamp}.xlsx"`,
         },
       });
     }

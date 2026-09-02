@@ -1,4 +1,4 @@
-# Asset Management
+![NookShelf](public/nookshelf-wordmark.png)
 
 Self-hosted asset tracking for home and small-team use — locations, asset types with custom
 fields (cables included), kits, checkout/return, QR labeling, and notifications. See

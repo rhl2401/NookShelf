@@ -21,7 +21,7 @@ function addSheet(
 
 export async function bundleToXlsx(bundle: ExportBundle): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Asset Management";
+  workbook.creator = "NookShelf";
   workbook.created = new Date();
 
   addSheet(
@@ -102,7 +102,7 @@ export async function bundleToXlsx(bundle: ExportBundle): Promise<Buffer> {
   const readme = workbook.addWorksheet("README");
   readme.getColumn(1).width = 100;
   [
-    "Asset Management data export (XLSX).",
+    "NookShelf data export (XLSX).",
     "",
     "Sheets: Locations, AssetTypes, Assets, Kits.",
     '"path" / "location" columns use " / " to separate nested location names, e.g. "House / Garage / Shelf 3".',

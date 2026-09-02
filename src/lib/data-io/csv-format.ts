@@ -69,7 +69,7 @@ export async function bundleToCsvZip(bundle: ExportBundle): Promise<Buffer> {
   zip.file("kits.csv", Papa.unparse(kitsToRows(bundle.kits)));
   zip.file(
     "README.txt",
-    "Asset Management data export (CSV).\n\n" +
+    "NookShelf data export (CSV).\n\n" +
       "Four files: locations.csv, asset-types.csv, assets.csv, kits.csv.\n" +
       "- \"path\" / \"location\" columns use \" / \" to separate nested location names, e.g. \"House / Garage / Shelf 3\".\n" +
       "- \"tags\" / \"memberAssetTags\" columns are pipe-separated, e.g. \"usb|cable|black\".\n" +

@@ -8,6 +8,20 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.1.0
+
+Rebranded to **NookShelf**.
+
+- Default product name, logo, and favicon now use the NookShelf brand instead of the generic
+  "Asset Management" placeholder. The wordmark image appears on the sign-in page when no custom
+  branding is configured.
+- Admin-configurable branding (Settings → app name, logo, sign-in headline/subtitle, accent color)
+  is unchanged — self-hosters can still fully override the default NookShelf branding with their
+  own, exactly as before.
+- Warmed up the light-theme background/surface colors (cards, sidebar, borders) from pure white to
+  a soft cream tone to match the new logo's palette. Dark mode is unchanged.
+- No schema changes. No manual steps — this is a purely cosmetic/branding release.
+
 ## 1.0.0
 
 Security hardening from a full OWASP Top 10 audit.
