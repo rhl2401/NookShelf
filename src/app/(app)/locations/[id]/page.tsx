@@ -85,7 +85,16 @@ export default async function LocationDetailPage({
               <LocationFormDialog
                 trigger={<Button variant="outline">Edit</Button>}
                 flatLocations={flatLocations}
-                location={location}
+                location={{
+                  id: location.id,
+                  name: location.name,
+                  parentId: location.parentId,
+                  code: location.code,
+                  icon: location.icon,
+                  iconColor: location.iconColor,
+                  primaryPictureId: location.primaryPictureId,
+                  notes: location.notes,
+                }}
                 myPictures={myPictures}
                 workspacePictures={workspacePictures}
               />
