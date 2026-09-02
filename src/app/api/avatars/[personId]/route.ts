@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { resolveStoredFilePath } from "@/lib/storage";
+import { readStoredFile } from "@/lib/storage";
 
 export async function GET(
   _req: Request,
@@ -16,7 +15,7 @@ export async function GET(
   const person = await prisma.person.findUnique({ where: { id: personId } });
   if (!person?.avatarPath) return new Response("Not found", { status: 404 });
 
-  const buffer = await readFile(resolveStoredFilePath(person.avatarPath));
+  const buffer = await readStoredFile(person.avatarPath);
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "image/webp",
