@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { resolveStoredFilePath } from "@/lib/storage";
+import { readStoredFile } from "@/lib/storage";
 
 export async function GET(
   req: Request,
@@ -20,7 +19,7 @@ export async function GET(
   // Older pictures predate the thumb field — fall back to the full size for those.
   const relativePath = wantsThumb && picture.thumbPath ? picture.thumbPath : picture.path;
 
-  const buffer = await readFile(resolveStoredFilePath(relativePath));
+  const buffer = await readStoredFile(relativePath);
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "image/webp",

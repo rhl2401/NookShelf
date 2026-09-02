@@ -7,6 +7,7 @@ import { PICTURE_SIZE_OPTIONS, DEFAULT_PICTURE_SIZE } from "@/lib/picture-size";
 import { processLogoUpload } from "@/lib/image-processing";
 import { saveLogoFile, deleteStoredFile } from "@/lib/storage";
 import { isValidHexColor } from "@/lib/color-shared";
+import { DEFAULT_BACKGROUND_SHADE, isBackgroundShadeKey } from "@/lib/background-shades";
 
 const SETTINGS_ID = "singleton";
 const MAX_LOGO_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -47,8 +48,25 @@ export async function getWorkspaceBranding() {
     color: settings?.color ?? null,
     signInHeadline: settings?.signInHeadline ?? null,
     signInSubtitle: settings?.signInSubtitle ?? null,
+    defaultBackgroundShade: isBackgroundShadeKey(settings?.defaultBackgroundShade)
+      ? settings.defaultBackgroundShade
+      : DEFAULT_BACKGROUND_SHADE,
     updatedAt: settings?.updatedAt ?? null,
   };
+}
+
+/** Admin-set default background shade — individual people can still override their own (see setMyBackgroundShade). */
+export async function setWorkspaceDefaultBackgroundShade(shade: string) {
+  await requirePermission("settings:manage");
+  if (!isBackgroundShadeKey(shade)) throw new Error("Invalid background shade.");
+
+  await prisma.workspaceSettings.upsert({
+    where: { id: SETTINGS_ID },
+    update: { defaultBackgroundShade: shade },
+    create: { id: SETTINGS_ID, defaultBackgroundShade: shade },
+  });
+
+  revalidatePath("/", "layout");
 }
 
 function revalidateBranding() {

@@ -8,6 +8,26 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.4.0
+
+- New background shade picker: 5 whites from cool to warm ("Frost", "Cool", "Neutral", "Warm",
+  "Cream"). Anyone can pick their own from Profile settings (avatar menu → Profile settings), or
+  leave it on the workspace default. Admins set that default from Workspace settings → Default
+  background.
+- Schema change: adds `Person.backgroundShade` (nullable) and
+  `WorkspaceSettings.defaultBackgroundShade` (defaults to `"cream"`, matching the current look).
+  Applied automatically via `prisma migrate deploy` — no manual steps; existing instances keep
+  today's cream background as the default for everyone until changed.
+
+## 1.3.0
+
+- Optional S3 (or S3-compatible: MinIO, Cloudflare R2, Backblaze B2, etc.) object storage for
+  uploaded files, as an alternative to local disk. Set `STORAGE_DRIVER=s3` plus `S3_BUCKET`/
+  `S3_REGION` (see [README § Environment variables](README.md#environment-variables)) — leave
+  unset to keep the existing local-disk behavior, which remains the default.
+- No schema changes. No manual steps for existing instances — local storage keeps working exactly
+  as before unless you opt in to `STORAGE_DRIVER=s3`.
+
 ## 1.2.0
 
 - Your own profile picture and email-notification preference moved out of the Settings page into

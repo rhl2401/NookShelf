@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { resolveStoredFilePath } from "@/lib/storage";
+import { readStoredFile } from "@/lib/storage";
 import { INLINE_SAFE_ATTACHMENT_MIME_TYPES } from "@/lib/attachment-types";
 
 export async function GET(
@@ -17,7 +16,7 @@ export async function GET(
   const attachment = await prisma.attachment.findUnique({ where: { id } });
   if (!attachment) return new Response("Not found", { status: 404 });
 
-  const buffer = await readFile(resolveStoredFilePath(attachment.path));
+  const buffer = await readStoredFile(attachment.path);
   const disposition = INLINE_SAFE_ATTACHMENT_MIME_TYPES.has(attachment.mimeType)
     ? "inline"
     : "attachment";

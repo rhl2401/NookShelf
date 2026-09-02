@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/nav/sidebar";
 import { Topbar } from "@/components/nav/topbar";
 import { getWorkspaceBranding } from "@/lib/actions/workspace-settings";
 import { DEFAULT_APP_NAME } from "@/lib/branding-shared";
+import { isBackgroundShadeKey } from "@/lib/background-shades";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -15,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     session.user.personId
       ? prisma.person.findUnique({
           where: { id: session.user.personId },
-          select: { avatarPath: true, emailNotificationsEnabled: true },
+          select: { avatarPath: true, emailNotificationsEnabled: true, backgroundShade: true },
         })
       : null,
     getWorkspaceBranding(),
@@ -29,6 +30,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           personId: session.user.personId,
           hasAvatar: Boolean(person.avatarPath),
           emailNotificationsEnabled: person.emailNotificationsEnabled,
+          backgroundShade: isBackgroundShadeKey(person.backgroundShade)
+            ? person.backgroundShade
+            : null,
         }
       : null;
 
