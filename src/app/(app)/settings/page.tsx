@@ -61,6 +61,17 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
+            Default background <WorkspaceBadge />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BackgroundShadeControl shade={branding.defaultBackgroundShade} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
             OAuth providers <WorkspaceBadge />
           </CardTitle>
         </CardHeader>
@@ -115,17 +126,6 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <PictureSizeControl pictureSize={pictureSize} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            Default background <WorkspaceBadge />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BackgroundShadeControl shade={branding.defaultBackgroundShade} />
         </CardContent>
       </Card>
 
