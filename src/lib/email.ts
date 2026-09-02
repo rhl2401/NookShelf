@@ -25,7 +25,7 @@ export async function sendEmail(to: string, subject: string, text: string) {
   if (!t) return; // email not configured — silently skip
 
   await t.sendMail({
-    from: process.env.SMTP_FROM || "Asset Management <noreply@example.com>",
+    from: process.env.SMTP_FROM || "NookShelf <noreply@example.com>",
     to,
     subject,
     text,

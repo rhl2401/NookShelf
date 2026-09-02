@@ -5,9 +5,14 @@ import { isDevLoginEnabled } from "@/lib/dev-login";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Boxes, FlaskConical } from "lucide-react";
+import { FlaskConical } from "lucide-react";
 import { getWorkspaceBranding } from "@/lib/actions/workspace-settings";
-import { DEFAULT_APP_NAME, DEFAULT_SIGN_IN_SUBTITLE } from "@/lib/branding-shared";
+import {
+  DEFAULT_APP_NAME,
+  DEFAULT_SIGN_IN_SUBTITLE,
+  DEFAULT_LOGO_URL,
+  DEFAULT_WORDMARK_URL,
+} from "@/lib/branding-shared";
 import { AssetTypeIcon } from "@/components/asset-type-icon";
 
 const PROVIDERS: Array<{ id: string; label: string; enabled: boolean }> = [
@@ -51,6 +56,7 @@ export default async function LoginPage({
   const headline = branding.signInHeadline ?? appName;
   const subtitle = branding.signInSubtitle ?? DEFAULT_SIGN_IN_SUBTITLE;
   const logoUrl = branding.hasLogo ? `/api/branding/logo?v=${branding.updatedAt?.getTime()}` : null;
+  const isUnbranded = !branding.appName && !branding.signInHeadline && !logoUrl && !branding.icon;
 
   const people = devLoginEnabled
     ? await prisma.person.findMany({
@@ -70,11 +76,19 @@ export default async function LoginPage({
           ) : branding.icon ? (
             <AssetTypeIcon icon={branding.icon} color={branding.iconColor} size="md" />
           ) : (
-            <div className="flex size-11 items-center justify-center rounded-xl bg-foreground text-background">
-              <Boxes className="size-6" />
-            </div>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={DEFAULT_LOGO_URL} alt={appName} className="size-[168px] object-contain" />
           )}
-          <h1 className="text-xl font-semibold tracking-tight">{headline}</h1>
+          {isUnbranded ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={DEFAULT_WORDMARK_URL}
+              alt={appName}
+              className="h-12 max-w-72 object-contain"
+            />
+          ) : (
+            <h1 className="text-xl font-semibold tracking-tight">{headline}</h1>
+          )}
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
 

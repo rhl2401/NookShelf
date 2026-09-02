@@ -1,6 +1,6 @@
 {
-  "name": "asset_management",
-  "version": "1.0.0",
+  "name": "nookshelf",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

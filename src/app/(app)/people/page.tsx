@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreatePersonDialog } from "@/components/people/create-person-dialog";
+import { EditPersonDialog } from "@/components/people/edit-person-dialog";
 import { EditRolesDialog } from "@/components/people/edit-roles-dialog";
 import { MergePeopleDialog } from "@/components/people/merge-people-dialog";
 import { ToggleActiveButton } from "@/components/people/toggle-active-button";
@@ -72,11 +73,7 @@ export default async function PeoplePage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{person.name}</p>
-                      {person.userId ? (
-                        <Badge variant="secondary">Has login</Badge>
-                      ) : (
-                        <Badge variant="outline">No login yet</Badge>
-                      )}
+                      {!person.userId && <Badge variant="outline">No login</Badge>}
                       {!active && <Badge variant="destructive">Inactive</Badge>}
                     </div>
                     {person.email && (
@@ -94,6 +91,12 @@ export default async function PeoplePage() {
                     </div>
                   </div>
                   <div className="flex shrink-0 gap-2">
+                    <EditPersonDialog
+                      personId={person.id}
+                      personName={person.name}
+                      hasAvatar={Boolean(person.avatarPath)}
+                      oauthImage={person.user?.image}
+                    />
                     <EditRolesDialog
                       personId={person.id}
                       personName={person.name}
