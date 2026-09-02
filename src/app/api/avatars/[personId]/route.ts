@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ personId: string }> },
 ) {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user.permissions.includes("asset:view")) {
     return new Response("Forbidden", { status: 403 });
   }
 

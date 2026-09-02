@@ -11,14 +11,17 @@ export function uploadsRoot() {
 
 /** Saves a File under uploads/assets/<assetId>/, returning the relative path stored on Attachment.path. */
 export async function saveAssetAttachment(assetId: string, file: File) {
-  const dir = path.join(uploadsRoot(), "assets", assetId);
+  const dir = path.resolve(/* turbopackIgnore: true */ uploadsRoot(), "assets", assetId);
+  if (!dir.startsWith(path.join(uploadsRoot(), "assets") + path.sep)) {
+    throw new Error("Invalid asset id.");
+  }
   await mkdir(dir, { recursive: true });
 
   const ext = path.extname(file.name) || "";
   const filename = `${crypto.randomUUID()}${ext}`;
   const relativePath = path.join("assets", assetId, filename);
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadsRoot(), relativePath), buffer);
+  await writeFile(path.join(dir, filename), buffer);
 
   return relativePath;
 }
@@ -61,9 +64,9 @@ export async function saveLogoFile(buffer: Buffer) {
 
 export async function deleteStoredFile(relativePath: string) {
   try {
-    await unlink(path.join(/* turbopackIgnore: true */ uploadsRoot(), relativePath));
+    await unlink(resolveStoredFilePath(relativePath));
   } catch {
-    // already gone — fine.
+    // already gone (or an invalid path) — fine.
   }
 }
 

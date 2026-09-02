@@ -9,6 +9,7 @@ cd "$(dirname "$0")/.."
 TIMESTAMP=$(date +%Y%m%d%H%M%S)
 OUT_DIR="backups/${TIMESTAMP}"
 mkdir -p "$OUT_DIR"
+chmod 700 "$OUT_DIR"
 
 echo "Backing up database..."
 docker compose exec -T db pg_dump -U "${POSTGRES_USER:-assetmgmt}" "${POSTGRES_DB:-assetmgmt}" > "$OUT_DIR/database.sql"

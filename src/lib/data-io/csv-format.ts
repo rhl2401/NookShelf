@@ -8,50 +8,57 @@ import {
   type AssetRow,
   type KitRow,
 } from "@/lib/data-io/types";
+import { sanitizeRow } from "@/lib/data-io/sanitize-cell";
 
 // Array/object fields don't fit plain CSV cells — arrays of plain strings are
 // pipe-joined (matches the existing single-asset CSV export convention),
 // structured data (custom field schemas/values) is JSON-encoded per cell.
 
 function locationsToRows(locations: LocationRow[]) {
-  return locations.map((l) => ({ path: l.path, notes: l.notes ?? "" }));
+  return locations.map((l) => sanitizeRow({ path: l.path, notes: l.notes ?? "" }));
 }
 
 function assetTypesToRows(assetTypes: AssetTypeRow[]) {
-  return assetTypes.map((t) => ({
-    name: t.name,
-    category: t.category ?? "",
-    icon: t.icon ?? "",
-    fieldSchemaJson: JSON.stringify(t.fieldSchema ?? []),
-  }));
+  return assetTypes.map((t) =>
+    sanitizeRow({
+      name: t.name,
+      category: t.category ?? "",
+      icon: t.icon ?? "",
+      fieldSchemaJson: JSON.stringify(t.fieldSchema ?? []),
+    }),
+  );
 }
 
 function assetsToRows(assets: AssetRow[]) {
-  return assets.map((a) => ({
-    assetTag: a.assetTag,
-    name: a.name,
-    assetType: a.assetType,
-    location: a.location ?? "",
-    assignedToEmail: a.assignedToEmail ?? "",
-    parentAssetTag: a.parentAssetTag ?? "",
-    status: a.status ?? "",
-    notes: a.notes ?? "",
-    purchaseDate: a.purchaseDate ?? "",
-    purchasePrice: a.purchasePrice ?? "",
-    purchaseCurrency: a.purchaseCurrency ?? "",
-    vendor: a.vendor ?? "",
-    warrantyExpiresAt: a.warrantyExpiresAt ?? "",
-    tags: (a.tags ?? []).join("|"),
-    customFieldsJson: JSON.stringify(a.customFields ?? {}),
-  }));
+  return assets.map((a) =>
+    sanitizeRow({
+      assetTag: a.assetTag,
+      name: a.name,
+      assetType: a.assetType,
+      location: a.location ?? "",
+      assignedToEmail: a.assignedToEmail ?? "",
+      parentAssetTag: a.parentAssetTag ?? "",
+      status: a.status ?? "",
+      notes: a.notes ?? "",
+      purchaseDate: a.purchaseDate ?? "",
+      purchasePrice: a.purchasePrice != null ? String(a.purchasePrice) : "",
+      purchaseCurrency: a.purchaseCurrency ?? "",
+      vendor: a.vendor ?? "",
+      warrantyExpiresAt: a.warrantyExpiresAt ?? "",
+      tags: (a.tags ?? []).join("|"),
+      customFieldsJson: JSON.stringify(a.customFields ?? {}),
+    }),
+  );
 }
 
 function kitsToRows(kits: KitRow[]) {
-  return kits.map((k) => ({
-    name: k.name,
-    description: k.description ?? "",
-    memberAssetTags: (k.memberAssetTags ?? []).join("|"),
-  }));
+  return kits.map((k) =>
+    sanitizeRow({
+      name: k.name,
+      description: k.description ?? "",
+      memberAssetTags: (k.memberAssetTags ?? []).join("|"),
+    }),
+  );
 }
 
 export async function bundleToCsvZip(bundle: ExportBundle): Promise<Buffer> {

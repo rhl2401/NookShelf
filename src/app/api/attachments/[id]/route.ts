@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { resolveStoredFilePath } from "@/lib/storage";
+import { INLINE_SAFE_ATTACHMENT_MIME_TYPES } from "@/lib/attachment-types";
 
 export async function GET(
   _req: Request,
@@ -17,10 +18,14 @@ export async function GET(
   if (!attachment) return new Response("Not found", { status: 404 });
 
   const buffer = await readFile(resolveStoredFilePath(attachment.path));
+  const disposition = INLINE_SAFE_ATTACHMENT_MIME_TYPES.has(attachment.mimeType)
+    ? "inline"
+    : "attachment";
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": attachment.mimeType,
-      "Content-Disposition": `inline; filename="${attachment.originalName}"`,
+      "Content-Disposition": `${disposition}; filename="${encodeURIComponent(attachment.originalName)}"`,
+      "X-Content-Type-Options": "nosniff",
       "Cache-Control": "private, max-age=86400",
     },
   });
