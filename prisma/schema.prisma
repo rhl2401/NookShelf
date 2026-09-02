@@ -89,6 +89,10 @@ model Person {
 
   emailNotificationsEnabled Boolean @default(true)
 
+  // One of BackgroundShadeKey (src/lib/background-shades.ts) — null means
+  // "use the workspace default" (WorkspaceSettings.defaultBackgroundShade).
+  backgroundShade String?
+
   // Profile picture — a dedicated square .webp, not part of the reusable
   // Picture library (it's personal, not meant to be attached to assets).
   avatarPath      String?
@@ -368,6 +372,10 @@ model WorkspaceSettings {
   color          String?
   signInHeadline String?
   signInSubtitle String?
+
+  // Workspace-wide default for Person.backgroundShade — one of BackgroundShadeKey
+  // (src/lib/background-shades.ts). Individual people can override their own.
+  defaultBackgroundShade String @default("cream")
 
   updatedAt   DateTime @updatedAt
 }

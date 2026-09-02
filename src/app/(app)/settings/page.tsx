@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { WebhookFormDialog } from "@/components/settings/webhook-form-dialog";
 import { WebhookRowActions } from "@/components/settings/webhook-row-actions";
 import { PictureSizeControl } from "@/components/settings/picture-size-control";
+import { BackgroundShadeControl } from "@/components/settings/background-shade-control";
 import { BrandingForm } from "@/components/settings/branding-form";
 import { WorkspaceBadge } from "@/components/settings/workspace-badge";
 import { getDefaultCurrency, currencyLabel } from "@/lib/currency";
@@ -114,6 +115,17 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <PictureSizeControl pictureSize={pictureSize} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            Default background <WorkspaceBadge />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BackgroundShadeControl shade={branding.defaultBackgroundShade} />
         </CardContent>
       </Card>
 

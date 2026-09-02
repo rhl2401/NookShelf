@@ -15,13 +15,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileSettingsDialog } from "@/components/settings/profile-settings-dialog";
+import type { BackgroundShadeKey } from "@/lib/background-shades";
+
+export type ProfileMenuData = {
+  personId: string;
+  hasAvatar: boolean;
+  emailNotificationsEnabled: boolean;
+  backgroundShade: BackgroundShadeKey | null;
+};
 
 export function UserMenu({
   user,
   profile,
 }: {
   user: { name?: string | null; email?: string | null; image?: string | null };
-  profile: { personId: string; hasAvatar: boolean; emailNotificationsEnabled: boolean } | null;
+  profile: ProfileMenuData | null;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const initials = (user.name || user.email || "?")
@@ -77,6 +85,7 @@ export function UserMenu({
           hasAvatar={profile.hasAvatar}
           oauthImage={user.image}
           emailNotificationsEnabled={profile.emailNotificationsEnabled}
+          backgroundShade={profile.backgroundShade}
         />
       )}
     </>

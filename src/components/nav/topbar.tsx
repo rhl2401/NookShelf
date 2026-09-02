@@ -2,7 +2,7 @@ import Link from "next/link";
 import { DEFAULT_LOGO_URL } from "@/lib/branding-shared";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { AssetTypeIcon } from "@/components/asset-type-icon";
-import { UserMenu } from "@/components/nav/user-menu";
+import { UserMenu, type ProfileMenuData } from "@/components/nav/user-menu";
 
 export function Topbar({
   user,
@@ -13,7 +13,7 @@ export function Topbar({
   iconColor,
 }: {
   user: { name?: string | null; email?: string | null; image?: string | null };
-  profile: { personId: string; hasAvatar: boolean; emailNotificationsEnabled: boolean } | null;
+  profile: ProfileMenuData | null;
   appName: string;
   logoUrl?: string | null;
   icon?: string | null;
