@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     session.user.personId
       ? prisma.person.findUnique({
           where: { id: session.user.personId },
-          select: { avatarPath: true },
+          select: { avatarPath: true, emailNotificationsEnabled: true },
         })
       : null,
     getWorkspaceBranding(),
@@ -23,11 +23,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const image = person?.avatarPath ? `/api/avatars/${session.user.personId}` : session.user.image;
   const appName = branding.appName ?? DEFAULT_APP_NAME;
   const logoUrl = branding.hasLogo ? `/api/branding/logo?v=${branding.updatedAt?.getTime()}` : null;
+  const profile =
+    person && session.user.personId
+      ? {
+          personId: session.user.personId,
+          hasAvatar: Boolean(person.avatarPath),
+          emailNotificationsEnabled: person.emailNotificationsEnabled,
+        }
+      : null;
 
   return (
     <div className="flex h-screen flex-col">
       <Topbar
         user={{ ...session.user, image }}
+        profile={profile}
         appName={appName}
         logoUrl={logoUrl}
         icon={branding.icon}

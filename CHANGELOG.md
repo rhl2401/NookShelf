@@ -8,6 +8,19 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.2.0
+
+- Your own profile picture and email-notification preference moved out of the Settings page into
+  a "Profile settings" dialog opened from your avatar in the top bar.
+- "Settings" is renamed to "Workspace settings" — it's now exclusively workspace-wide
+  configuration (branding, OAuth, SMTP, currency, picture size, webhooks, data import/export).
+  Non-admins are redirected away instead of seeing an empty page.
+- Admins with user administration (`user:manage`) can now edit another person's name and profile
+  picture from the People page, via a new "Edit" button per row.
+- The People page no longer shows a "Has login" badge — only a "No login" tag for people who
+  haven't signed in yet, to reduce visual noise for the common case.
+- No schema changes. No manual steps.
+
 ## 1.1.0
 
 Rebranded to **NookShelf**.

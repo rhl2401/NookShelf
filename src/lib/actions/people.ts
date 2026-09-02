@@ -95,6 +95,25 @@ export async function createPerson(input: z.infer<typeof personSchema>) {
   return person;
 }
 
+export async function updatePersonName(personId: string, name: string) {
+  const session = await requirePermission("user:manage");
+  const parsed = personSchema.pick({ name: true }).parse({ name });
+
+  const before = await prisma.person.findUniqueOrThrow({ where: { id: personId } });
+  await prisma.person.update({ where: { id: personId }, data: { name: parsed.name } });
+
+  await writeAudit({
+    entityType: "Person",
+    entityId: personId,
+    action: "UPDATE",
+    actorId: session.user.personId,
+    before: { name: before.name },
+    after: { name: parsed.name },
+  });
+
+  revalidatePath("/people");
+}
+
 export async function updatePersonRoles(personId: string, roleIds: string[]) {
   const session = await requirePermission("user:manage");
 

@@ -42,7 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/roles", label: "Roles", icon: ShieldCheck, permission: "role:manage", adminOnly: true },
   {
     href: "/settings",
-    label: "Settings",
+    label: "Workspace settings",
     icon: Settings,
     permission: "settings:manage",
     adminOnly: true,
