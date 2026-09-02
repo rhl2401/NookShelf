@@ -52,26 +52,53 @@ npm run db:seed
 npm run dev
 ```
 
-## Configuring OAuth
+## Environment variables
 
-Set whichever of these you use in `.env` (leave the others blank — the login page only shows
-providers with credentials configured):
+All variables live in `.env` (copy `.env.example` to start). "Required" means the app/Compose
+won't behave correctly (or won't start) without it — everything else is optional and either
+disables a feature when blank or falls back to its default.
 
-- **Google** — `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
-- **Microsoft (Entra ID)** — `AUTH_MICROSOFT_ENTRA_ID_ID`, `AUTH_MICROSOFT_ENTRA_ID_SECRET`,
-  `AUTH_MICROSOFT_ENTRA_ID_ISSUER`
-- **Any other OIDC provider** — `AUTH_GENERIC_OIDC_ID`, `AUTH_GENERIC_OIDC_SECRET`,
-  `AUTH_GENERIC_OIDC_ISSUER`, `AUTH_GENERIC_OIDC_NAME`
+| Variable | Required | Default | Description |
+| --- | --- | --- | --- |
+| `POSTGRES_PASSWORD` | Yes | — | Password for the Postgres user. Docker Compose refuses to start without it (no weak default). |
+| `DATABASE_URL` | Yes, for local dev only | — | Full Postgres connection string, used by `next dev`/`next start` when running outside Docker. Docker Compose ignores this and builds its own from the `POSTGRES_*` variables below. |
+| `NEXTAUTH_URL` | Yes | `http://localhost:3000` | Public base URL of the app — used to build OAuth callback URLs. |
+| `AUTH_SECRET` | Yes | — | Random secret used to sign session JWTs. Generate with `openssl rand -base64 32`. |
+| `AUTH_DEV_LOGIN` | No | `false` | Dev-only login bypass (pick/create a test user, no OAuth needed). Only takes effect under `next dev` — structurally disabled in the Docker image regardless. Never set in a real deployment. |
+| `AUTH_GOOGLE_ID` | No¹ | — | Google OAuth client ID. Leave blank to hide Google on the login page. |
+| `AUTH_GOOGLE_SECRET` | No¹ | — | Google OAuth client secret. |
+| `AUTH_MICROSOFT_ENTRA_ID_ID` | No¹ | — | Microsoft Entra ID (Azure AD) application/client ID. |
+| `AUTH_MICROSOFT_ENTRA_ID_SECRET` | No¹ | — | Microsoft Entra ID client secret. |
+| `AUTH_MICROSOFT_ENTRA_ID_ISSUER` | No¹ | — | Microsoft Entra ID (tenant-specific) issuer URL. |
+| `AUTH_GENERIC_OIDC_ID` | No¹ | — | Client ID for any other OIDC provider. |
+| `AUTH_GENERIC_OIDC_SECRET` | No¹ | — | Client secret for the generic OIDC provider. |
+| `AUTH_GENERIC_OIDC_ISSUER` | No¹ | — | Issuer URL for the generic OIDC provider. |
+| `AUTH_GENERIC_OIDC_NAME` | No | `Single Sign-On` | Button label shown for the generic OIDC provider ("Continue with ..."). |
+| `SMTP_HOST` | No | — | SMTP server hostname. Leave blank to disable email notifications entirely. |
+| `SMTP_PORT` | No | `587` | SMTP server port. |
+| `SMTP_USER` | No | — | SMTP username, if the server requires auth. |
+| `SMTP_PASSWORD` | No | — | SMTP password, if the server requires auth. |
+| `SMTP_FROM` | No | `NookShelf <noreply@example.com>` | "From" address on outgoing notification emails. |
+| `UPLOADS_DIR` | No | `./uploads` | Where uploaded files (attachments, pictures, avatars, logos) are stored on disk. |
+| `DEFAULT_CURRENCY` | No | `EUR` | Currency purchase prices are converted to and displayed in by default. |
+| `POSTGRES_USER` | No | `assetmgmt` | Postgres username. Docker Compose only. |
+| `POSTGRES_DB` | No | `assetmgmt` | Postgres database name. Docker Compose only. |
+| `POSTGRES_PORT` | No | `5432` | Host port the Postgres container's `5432` is bound to (`127.0.0.1` only, not exposed to the network). Docker Compose only. |
+| `APP_PORT` | No | `3000` | Host port the app container's `3000` is bound to. Docker Compose only. |
+
+¹ Not individually required, but at least one full OAuth/OIDC provider group needs to be
+configured for anyone to actually sign in (aside from the dev-only bypass).
 
 Redirect URI for all providers: `<NEXTAUTH_URL>/api/auth/callback/<provider>` (e.g.
 `http://localhost:3000/api/auth/callback/google`).
 
 ## Currency
 
-Purchase prices can be entered in whatever currency an item was actually bought in. Set
-`DEFAULT_CURRENCY` (defaults to `EUR`) to the currency everything gets converted to for display —
-conversion uses live rates from the free frankfurter.app API, cached for 12 hours, and degrades
-gracefully (shows the original amount only) if the deployment has no outbound internet access.
+Purchase prices can be entered in whatever currency an item was actually bought in.
+`DEFAULT_CURRENCY` (see [Environment variables](#environment-variables)) sets the currency
+everything gets converted to for display — conversion uses live rates from the free
+frankfurter.app API, cached for 12 hours, and degrades gracefully (shows the original amount only)
+if the deployment has no outbound internet access.
 
 ## Data import / export
 
