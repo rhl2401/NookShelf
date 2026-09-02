@@ -7,6 +7,21 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
+# Separate, production-only install for the runner stage — keeps devDependencies
+# (typescript, eslint, tailwindcss, and everything they pull in, e.g. axe-core,
+# elkjs) out of the shipped image entirely, instead of copying builder's
+# dev-inclusive node_modules forward.
+FROM base AS prod-deps
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts
+COPY prisma ./prisma
+COPY prisma7.config.ts ./prisma7.config.ts
+# Downloads the Prisma query engine binary into this node_modules copy —
+# --ignore-scripts above skipped @prisma/engines' own postinstall step, and
+# without this the engine binary is missing at container startup.
+ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
+RUN npx prisma generate
+
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -22,7 +37,7 @@ RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs \
   && mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/public ./public
