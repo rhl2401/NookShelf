@@ -131,3 +131,9 @@ any format from the same page to see the exact structure expected.
 - No depreciation/maintenance scheduling — only purchase info + warranty-expiry alerts.
 - Attachments are stored on local disk (the `uploads` volume) by default; set `STORAGE_DRIVER=s3`
   to use S3-compatible object storage instead (see [Environment variables](#environment-variables)).
+
+## License
+
+[PolyForm Internal Use License 1.0.0](LICENSE) — free to run for yourself or your company's own
+internal use, including inside a for-profit business. What it doesn't allow is redistributing
+NookShelf, or offering it (as-is or modified) to other people as a hosted or managed service.
