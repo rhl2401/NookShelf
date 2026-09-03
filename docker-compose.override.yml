@@ -1,11 +1,16 @@
 # Auto-merged by `docker compose up` (standard Compose convention) — turns
-# the `app` service into a hot-reloading dev server with dev-login enabled.
-# Delete or rename this file for anything resembling a real deployment; the
-# base docker-compose.yml alone stays production-safe (NODE_ENV=production,
+# the `app` service into a hot-reloading dev server with dev-login enabled,
+# built from source (target: dev) instead of pulling the published image.
+# Delete or rename this file for anything resembling a real deployment: the
+# base docker-compose.yml alone pulls the prebuilt ghcr.io image instead of
+# building anything locally, and stays production-safe (NODE_ENV=production,
 # no dev-login, no source bind mount).
 services:
   app:
+    image: nookshelf:dev
     build:
+      context: .
+      dockerfile: Dockerfile
       target: dev
     environment:
       NODE_ENV: development
