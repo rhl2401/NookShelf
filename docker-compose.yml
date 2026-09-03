@@ -17,9 +17,7 @@ services:
       retries: 10
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${APP_IMAGE:-ghcr.io/rhl2401/nookshelf:latest}
     restart: unless-stopped
     depends_on:
       db:

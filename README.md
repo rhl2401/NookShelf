@@ -10,8 +10,12 @@ fields, kits, checkout/return, QR labeling, and notifications.
 1. Copy `.env.example` to `.env` and fill in at least `POSTGRES_PASSWORD` and `AUTH_SECRET`
    (generate both with `openssl rand -base64 32`, for example) and one OAuth provider's
    credentials.
-2. `docker compose up -d --build`
-3. Open http://<ip>:3000 — the first person to sign in becomes Admin automatically.
+2. Remove (or rename) `docker-compose.override.yml` — it's a dev-only file that builds from
+   source with hot-reload instead of using the published image. Without it, `docker-compose.yml`
+   alone just pulls `ghcr.io/rhl2401/nookshelf` (set `APP_IMAGE` in `.env` to pin a specific
+   version instead of `latest` — see [Environment variables](#environment-variables)).
+3. `docker compose pull && docker compose up -d`
+4. Open http://<ip>:3000 — the first person to sign in becomes Admin automatically.
 
 The `app` container runs `prisma migrate deploy` and seeds default roles/asset types on every
 start (both are idempotent), then starts the server. Uploaded files persist in the `uploads`
@@ -59,6 +63,7 @@ disables a feature when blank or falls back to its default.
 | `POSTGRES_DB` | No | `assetmgmt` | Postgres database name. Docker Compose only. |
 | `POSTGRES_PORT` | No | `5432` | Host port the Postgres container's `5432` is bound to (`127.0.0.1` only, not exposed to the network). Docker Compose only. |
 | `APP_PORT` | No | `3000` | Host port the app container's `3000` is bound to. Docker Compose only. |
+| `APP_IMAGE` | No | `ghcr.io/rhl2401/nookshelf:latest` | Which published image to pull. Set to a specific tag (e.g. `ghcr.io/rhl2401/nookshelf:1.4.0`) to pin a version instead of always running `latest`. Docker Compose only, and only when `docker-compose.override.yml` isn't in play (that file builds from source instead). |
 
 ¹ Not individually required, but at least one full OAuth/OIDC provider group needs to be
 configured for anyone to actually sign in (aside from the dev-only bypass).
@@ -75,7 +80,9 @@ Redirect URI for all providers: `<NEXTAUTH_URL>/api/auth/callback/<provider>` (e
    costs nothing.
 2. Check `CHANGELOG.md` for the version(s) you're jumping — most releases are drop-in, but it
    calls out anything that needs a manual step (new required env var, etc.).
-3. Pull the new code/image, then `docker compose up -d --build`.
+3. `docker compose pull && docker compose up -d` (running from source instead — i.e.
+   `docker-compose.override.yml` is still present — pull the new code and use
+   `docker compose up -d --build` instead).
 4. On startup, the `app` container automatically runs `prisma migrate deploy`, applying any
    migrations added since your last upgrade — non-interactively, and only the ones not already
    applied (tracked in the `_prisma_migrations` table), so this is safe to run on every restart,
