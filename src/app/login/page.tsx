@@ -14,6 +14,21 @@ import {
   DEFAULT_WORDMARK_URL,
 } from "@/lib/branding-shared";
 import { AssetTypeIcon } from "@/components/asset-type-icon";
+import { TriangleAlert } from "lucide-react";
+
+// Mirrors Auth.js's own built-in wording (@auth/core/lib/pages/signin.js) —
+// deliberately generic. The real reason (provider error code/description) is
+// never safe to show on this page (it's public, pre-authentication), so it
+// only goes to the server log via auth.config.ts's logger instead.
+const SIGNIN_ERROR_MESSAGES: Record<string, string> = {
+  OAuthSignin: "Couldn't start sign-in with that provider. Try again.",
+  OAuthCallbackError: "That provider couldn't complete sign-in. Try again, or try a different provider.",
+  OAuthCreateAccount: "Couldn't create an account with that provider. Try a different provider.",
+  OAuthAccountNotLinked: "That email is already linked to a different sign-in method. Use the one you signed up with.",
+  AccessDenied: "Access was denied by the provider.",
+  Configuration: "Sign-in isn't configured correctly. Check the server logs.",
+};
+const DEFAULT_SIGNIN_ERROR_MESSAGE = "Something went wrong signing you in. Check the server logs for details.";
 
 const PROVIDERS: Array<{ id: string; label: string; enabled: boolean }> = [
   {
@@ -47,8 +62,12 @@ export default async function LoginPage({
   const session = await auth();
   if (session?.user) redirect("/dashboard");
 
-  const { callbackUrl } = await searchParams;
+  const { callbackUrl, error } = await searchParams;
   const redirectTo = typeof callbackUrl === "string" ? callbackUrl : "/dashboard";
+  const errorMessage =
+    typeof error === "string"
+      ? (SIGNIN_ERROR_MESSAGES[error] ?? DEFAULT_SIGNIN_ERROR_MESSAGE)
+      : null;
   const enabledProviders = PROVIDERS.filter((p) => p.enabled);
   const devLoginEnabled = isDevLoginEnabled();
   const branding = await getWorkspaceBranding();
@@ -91,6 +110,13 @@ export default async function LoginPage({
           )}
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
+
+        {errorMessage && (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3">
           {enabledProviders.length === 0 && (
