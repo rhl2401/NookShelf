@@ -102,8 +102,8 @@ export function KitFormDialog({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label>Icon / picture</Label>
             <PictureIconEditor
+              label="Icon / picture"
               name={name || "Kit"}
               icon={icon}
               onIconChange={setIcon}

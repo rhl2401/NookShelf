@@ -119,8 +119,8 @@ export function LocationFormDialog({
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Icon / picture</Label>
             <PictureIconEditor
+              label="Icon / picture"
               name={name || "Location"}
               icon={icon}
               onIconChange={setIcon}
