@@ -32,6 +32,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-assetmgmt}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      # Required (set to "true") if you're running behind your own reverse
+      # proxy (nginx, Caddy, Traefik, etc.) — otherwise Auth.js rejects every
+      # request with "UntrustedHost", since it only auto-trusts the host on
+      # Vercel/Cloudflare Pages. Safe because it's your own proxy controlling
+      # the Host header, not the public internet directly. Leave unset/false
+      # if the app is exposed directly with no reverse proxy in front of it.
+      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-false}
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
       AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET}

@@ -34,6 +34,7 @@ disables a feature when blank or falls back to its default.
 | `DATABASE_URL` | Yes, for local dev only | — | Full Postgres connection string, used by `next dev`/`next start` when running outside Docker. Docker Compose ignores this and builds its own from the `POSTGRES_*` variables below. |
 | `NEXTAUTH_URL` | Yes | `http://localhost:3000` | Public base URL of the app — used to build OAuth callback URLs. |
 | `AUTH_SECRET` | Yes | — | Random secret used to sign session JWTs. Generate with `openssl rand -base64 32`. |
+| `AUTH_TRUST_HOST` | Yes, behind a reverse proxy | `false` | Set `true` if you're running behind your own reverse proxy (nginx, Caddy, Traefik, etc.). Otherwise sign-in fails with Auth.js's "UntrustedHost" error — it only auto-trusts the host on Vercel/Cloudflare Pages. Leave `false` if the app is exposed directly with no reverse proxy in front of it. |
 | `AUTH_DEV_LOGIN` | No | `false` | Dev-only login bypass (pick/create a test user, no OAuth needed). Only takes effect under `next dev` — structurally disabled in the Docker image regardless. Never set in a real deployment. |
 | `AUTH_GOOGLE_ID` | No¹ | — | Google OAuth client ID. Leave blank to hide Google on the login page. |
 | `AUTH_GOOGLE_SECRET` | No¹ | — | Google OAuth client secret. |

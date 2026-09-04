@@ -8,6 +8,18 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.5.1
+
+- New `AUTH_TRUST_HOST` environment variable. If you self-host behind your own reverse proxy
+  (nginx, Caddy, Traefik, etc.) with a real domain, sign-in previously failed with Auth.js's
+  `UntrustedHost` error — Auth.js only auto-trusts the request host on Vercel/Cloudflare Pages, not
+  in a plain Docker deployment. Set `AUTH_TRUST_HOST=true` in `.env` to fix it (default stays
+  `false`, since blindly trusting the host is only safe when your own reverse proxy — not the
+  public internet directly — controls the `Host` header).
+- No schema changes. Existing instances: if you're behind a reverse proxy and were hitting this,
+  add `AUTH_TRUST_HOST=true` to `.env` and restart — no image pull required, this is purely an
+  environment variable.
+
 ## 1.5.0
 
 **Fixes a deployment-blocking bug in `v1.4.0`'s Docker setup** — if `POSTGRES_PASSWORD` contained
