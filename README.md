@@ -7,9 +7,9 @@ fields, kits, checkout/return, QR labeling, and notifications.
 
 ## Running with Docker (recommended)
 
-1. Copy `.env.example` to `.env` and fill in at least `POSTGRES_PASSWORD` and `AUTH_SECRET`
-   (generate both with `openssl rand -base64 32`, for example) and one OAuth provider's
-   credentials.
+1. Copy `.env.example` to `.env` and fill in at least `POSTGRES_PASSWORD` (`openssl rand -hex 24`
+   — hex, not base64; see the comment above it in `.env.example`) and `AUTH_SECRET` (`openssl rand
+   -base64 32`), plus one OAuth provider's credentials.
 2. Remove (or rename) `docker-compose.override.yml` — it's a dev-only file that builds from
    source with hot-reload instead of using the published image. Without it, `docker-compose.yml`
    alone just pulls `ghcr.io/rhl2401/nookshelf` (set `APP_IMAGE` in `.env` to pin a specific
