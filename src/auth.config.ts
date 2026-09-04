@@ -32,6 +32,11 @@ if (
     issuer: process.env.AUTH_GENERIC_OIDC_ISSUER,
     clientId: process.env.AUTH_GENERIC_OIDC_ID,
     clientSecret: process.env.AUTH_GENERIC_OIDC_SECRET,
+    // Without this, next-auth only sends PKCE on the authorization request,
+    // omitting the `state` param entirely — providers that enforce it
+    // (e.g. Pocket ID) reject the request with "invalid_state" before it
+    // ever reaches our callback.
+    checks: ["pkce", "state"],
   });
 }
 

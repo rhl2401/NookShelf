@@ -8,6 +8,15 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.5.2
+
+- Fixes generic OIDC sign-in against providers that enforce the OAuth2 `state` parameter (e.g.
+  Pocket ID) — the authorization request `next-auth` built for the `generic-oidc` provider only
+  ever sent PKCE, never `state`, so strict providers rejected it outright with `invalid_state`
+  before the request ever reached NookShelf. Google and Microsoft Entra ID sign-in were unaffected
+  (they use next-auth's built-in provider presets, which already send both).
+- No schema changes. Existing instances: pull the new image and restart — no other steps needed.
+
 ## 1.5.1
 
 - New `AUTH_TRUST_HOST` environment variable. If you self-host behind your own reverse proxy
