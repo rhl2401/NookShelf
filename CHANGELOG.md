@@ -16,8 +16,6 @@ first — always back up before pulling a new version.
   for pasting/uploading a shared or custom template bundle.
 - Every button now shows a pointer cursor on hover — many had been showing the browser's default
   arrow cursor instead, since that's the unstyled default for `<button>` elements.
-- The icon/picture picker (Asset Type, Kit, Location, and new-Asset forms) now opens when you
-  hover or click anywhere in that field — the label included — not just the small picture square.
 - No schema changes. No manual steps.
 
 ## 1.6.0
