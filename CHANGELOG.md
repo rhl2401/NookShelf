@@ -8,6 +8,18 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.7.0
+
+- The "New asset type" dialog now offers the Cable/Vehicle/Battery starter templates directly —
+  pick one to pre-fill name, category, icon, and custom fields (still fully editable before you
+  create), instead of needing the separate "Import template" button. That button is still there
+  for pasting/uploading a shared or custom template bundle.
+- Every button now shows a pointer cursor on hover — many had been showing the browser's default
+  arrow cursor instead, since that's the unstyled default for `<button>` elements.
+- The icon/picture picker (Asset Type, Kit, Location, and new-Asset forms) now opens when you
+  hover or click anywhere in that field — the label included — not just the small picture square.
+- No schema changes. No manual steps.
+
 ## 1.6.0
 
 - Better diagnostics for failed sign-in, prompted by how hard the 1.5.2 `invalid_state` bug was to
