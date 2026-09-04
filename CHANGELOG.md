@@ -8,6 +8,34 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.5.0
+
+**Fixes a deployment-blocking bug in `v1.4.0`'s Docker setup** — if `POSTGRES_PASSWORD` contained
+a `/`, `+`, `=`, `@`, or a few other URL-special characters (a real possibility with the
+`openssl rand -base64 24` this project itself suggested for it), the app would fail to start with
+Prisma error `P1013: invalid port number in database URL`, in a restart loop. `docker-compose.yml`
+built `DATABASE_URL` by pasting the password straight into a connection string with no
+URL-encoding, so a `/` in the password, for example, got read as a path separator and corrupted
+everything after it.
+
+- `docker-compose.yml` now passes `POSTGRES_USER`/`POSTGRES_PASSWORD`/`POSTGRES_DB` to the `app`
+  container as separate variables instead of pre-building the connection string.
+- `docker-entrypoint.sh` builds `DATABASE_URL` itself, URL-encoding each part — safe with any
+  password, whatever characters it contains.
+- `.env.example`'s suggested generator for `POSTGRES_PASSWORD` changed from
+  `openssl rand -base64 24` to `openssl rand -hex 24` (hex output has no special characters at
+  all) — this also covers `next dev`/local development, which builds its own `DATABASE_URL`
+  directly from `.env` and isn't touched by the `docker-entrypoint.sh` fix above.
+
+**If you deployed `v1.4.0` and hit this**: regenerate `POSTGRES_PASSWORD` with
+`openssl rand -hex 24` and update it in both your `.env` and, if you'd previously started the `db`
+container with the old password, connect and change it there too
+(`ALTER USER assetmgmt WITH PASSWORD '...'` inside the container) — or simplest, if you have no
+data yet, remove the `db_data` volume and let it re-initialize with the new password. Then
+`docker compose pull && docker compose up -d`.
+
+No schema changes.
+
 ## 1.4.0
 
 - New background shade picker: 5 whites from cool to warm ("Frost", "Cool", "Neutral", "Warm",
