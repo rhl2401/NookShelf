@@ -64,6 +64,12 @@ services:
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-false}
       S3_PREFIX: ${S3_PREFIX}
       DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-EUR}
+    # Delete this if you're running a reverse proxy (nginx, Caddy, Traefik,
+    # etc.) on the same Docker network as this container — point the proxy at
+    # `app:3000` directly instead. Nothing outside that network can reach the
+    # app at all then, which is strictly more locked-down than publishing the
+    # port and relying on the proxy alone. See README § Running behind a
+    # reverse proxy.
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
