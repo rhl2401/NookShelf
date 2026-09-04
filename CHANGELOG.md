@@ -8,6 +8,20 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.6.0
+
+- Better diagnostics for failed sign-in, prompted by how hard the 1.5.2 `invalid_state` bug was to
+  debug from our own logs: Auth.js's default logger only ever printed a truncated, minified stack
+  trace and silently dropped `error.cause` — which is exactly where the OAuth provider's actual
+  error/error_description lives. `src/auth.config.ts` now logs the full cause (redacting anything
+  that looks like a secret/token/password first) on every sign-in error.
+- The login page now shows a short, generic reason when sign-in fails (e.g. "That provider
+  couldn't complete sign-in. Try again, or try a different provider.") instead of failing
+  silently. Deliberately generic and modeled on Auth.js's own built-in wording — this is a public,
+  pre-authentication page, so the actual technical detail (provider error code, stack trace) only
+  ever goes to the server log above, never the browser.
+- No schema changes. No manual steps.
+
 ## 1.5.2
 
 - Fixes generic OIDC sign-in against providers that enforce the OAuth2 `state` parameter (e.g.
