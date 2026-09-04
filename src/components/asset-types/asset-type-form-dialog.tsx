@@ -17,9 +17,12 @@ import { Label } from "@/components/ui/label";
 import { DialogTriggerButton } from "@/components/dialog-trigger-button";
 import { FieldSchemaEditor } from "@/components/asset-types/field-schema-editor";
 import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
+import { AssetTypeIcon } from "@/components/asset-type-icon";
 import type { PictureRef } from "@/components/pictures/picture-row";
 import { createAssetType, updateAssetType } from "@/lib/actions/asset-types";
+import { STARTER_TEMPLATES, type AssetTypeTemplate } from "@/lib/asset-type-templates";
 import type { AssetFieldDef } from "@/lib/asset-fields";
+import { cn } from "@/lib/utils";
 
 export function AssetTypeFormDialog({
   trigger,
@@ -49,8 +52,27 @@ export function AssetTypeFormDialog({
   const [fields, setFields] = useState<AssetFieldDef[]>(
     (assetType?.fieldSchema as AssetFieldDef[] | undefined) ?? [],
   );
+  const [templateName, setTemplateName] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+
+  function applyTemplate(template: AssetTypeTemplate) {
+    setTemplateName(template.name);
+    setName(template.name);
+    setCategory(template.category ?? "");
+    setIcon(template.icon ?? null);
+    setIconColor(template.iconColor ?? null);
+    setFields(template.fieldSchema);
+  }
+
+  function startBlank() {
+    setTemplateName(null);
+    setName("");
+    setCategory("");
+    setIcon(null);
+    setIconColor(null);
+    setFields([]);
+  }
 
   function submit() {
     startTransition(async () => {
@@ -96,6 +118,33 @@ export function AssetTypeFormDialog({
         </DialogHeader>
 
         <div className="flex max-h-[65vh] flex-col gap-4 overflow-y-auto pr-1">
+          {!assetType?.id && (
+            <div className="grid gap-1.5">
+              <Label>Start from a template</Label>
+              <div className="flex flex-wrap gap-2">
+                {STARTER_TEMPLATES.map((t) => (
+                  <button
+                    key={t.name}
+                    type="button"
+                    onClick={() => applyTemplate(t)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm transition-colors hover:bg-muted/50",
+                      templateName === t.name ? "border-primary bg-primary/5" : "border-border",
+                    )}
+                  >
+                    <AssetTypeIcon icon={t.icon} color={t.iconColor} size="sm" />
+                    {t.name}
+                  </button>
+                ))}
+                {templateName && (
+                  <Button type="button" variant="ghost" size="sm" onClick={startBlank}>
+                    Start blank
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label htmlFor="asset-type-name">Name</Label>
@@ -113,8 +162,8 @@ export function AssetTypeFormDialog({
           </div>
 
           <div className="grid gap-1.5">
-            <Label>Icon / picture</Label>
             <PictureIconEditor
+              label="Icon / picture"
               name={name || "Asset type"}
               icon={icon}
               onIconChange={setIcon}
