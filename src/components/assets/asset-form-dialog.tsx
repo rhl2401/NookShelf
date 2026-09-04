@@ -169,8 +169,8 @@ export function AssetFormDialog({
 
             {!asset?.id && (
               <div className="col-span-2 grid gap-1.5">
+                <Label>Icon / picture</Label>
                 <PictureIconEditor
-                  label="Icon / picture"
                   name={name || "Asset"}
                   icon={icon}
                   onIconChange={setIcon}
