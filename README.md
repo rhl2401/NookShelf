@@ -21,6 +21,33 @@ The `app` container runs `prisma migrate deploy` and seeds default roles/asset t
 start (both are idempotent), then starts the server. Uploaded files persist in the `uploads`
 Docker volume; the database persists in `db_data`.
 
+## Running behind a reverse proxy
+
+1. Set `AUTH_TRUST_HOST=true` in `.env` — otherwise sign-in fails with Auth.js's "UntrustedHost"
+   error (see [Environment variables](#environment-variables)). Set `NEXTAUTH_URL` to your real
+   public URL (e.g. `https://nookshelf.example.com`).
+2. In `docker-compose.yml`, put the `app` service on the same Docker network as your reverse
+   proxy and delete its `ports:` mapping — the proxy can reach `app:3000` directly over that
+   shared network, so nothing needs to be published to the host at all. For example, if your
+   proxy already runs on an external network named `proxy`:
+
+   ```yaml
+   services:
+     app:
+       networks:
+         - default   # keeps talking to `db`
+         - proxy
+       # ports:        <- delete this, nothing needs to reach the host directly anymore
+       #   - "${APP_PORT:-3000}:3000"
+
+   networks:
+     proxy:
+       external: true
+   ```
+
+   Then point your proxy's config at `http://app:3000` (or whatever you named the service) instead
+   of the host's published port.
+3. Configure TLS/your domain in the reverse proxy itself — NookShelf doesn't terminate TLS.
 
 ## Environment variables
 
