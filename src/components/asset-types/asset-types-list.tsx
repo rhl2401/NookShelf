@@ -23,6 +23,7 @@ type AssetTypeRow = {
   category: string | null;
   icon: string | null;
   iconColor: string | null;
+  inheritIcon: boolean;
   primaryPictureId: string | null;
   isBuiltIn: boolean;
   fieldSchema: unknown;

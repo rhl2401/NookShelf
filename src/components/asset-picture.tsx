@@ -10,6 +10,7 @@ export function AssetPicture({
   color,
   typeIcon,
   typeColor,
+  inheritTypeIcon = true,
   alt,
   size = "md",
   className,
@@ -19,10 +20,15 @@ export function AssetPicture({
   color?: string | null;
   typeIcon?: string | null;
   typeColor?: string | null;
+  // Whether to fall back to typeIcon/typeColor at all — false when the
+  // asset's AssetType has icon inheritance turned off (AssetType.inheritIcon).
+  inheritTypeIcon?: boolean;
   alt: string;
   size?: keyof typeof PICTURE_CONTAINER_SIZE;
   className?: string;
 }) {
+  const effectiveTypeIcon = inheritTypeIcon ? typeIcon : null;
+  const effectiveTypeColor = inheritTypeIcon ? typeColor : null;
   if (pictureId) {
     return (
       <div
@@ -42,8 +48,8 @@ export function AssetPicture({
 
   return (
     <AssetTypeIcon
-      icon={icon ?? typeIcon ?? null}
-      color={icon ? color : typeColor}
+      icon={icon ?? effectiveTypeIcon ?? null}
+      color={icon ? color : effectiveTypeColor}
       size={size}
       className={className}
     />

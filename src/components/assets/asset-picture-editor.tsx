@@ -25,6 +25,7 @@ export function AssetPictureEditor({
   color,
   typeIcon,
   typeColor,
+  inheritTypeIcon = true,
   pictureId,
   myPictures,
   workspacePictures,
@@ -35,6 +36,9 @@ export function AssetPictureEditor({
   color: string | null;
   typeIcon: string | null;
   typeColor: string | null;
+  // Whether typeIcon/typeColor are usable as a fallback at all — false when
+  // the asset's AssetType has icon inheritance turned off.
+  inheritTypeIcon?: boolean;
   pictureId: string | null;
   myPictures: PictureRef[];
   workspacePictures: PictureRef[];
@@ -42,7 +46,7 @@ export function AssetPictureEditor({
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const hasPicture = Boolean(pictureId || icon || typeIcon);
+  const hasPicture = Boolean(pictureId || icon || (inheritTypeIcon && typeIcon));
 
   function usePicture(id: string) {
     startTransition(async () => {
@@ -110,6 +114,7 @@ export function AssetPictureEditor({
               color={color}
               typeIcon={typeIcon}
               typeColor={typeColor}
+              inheritTypeIcon={inheritTypeIcon}
               alt={name}
               size="xl"
             />
@@ -165,12 +170,14 @@ export function AssetPictureEditor({
         <div className="flex flex-col gap-1.5">
           <Label>Icon</Label>
           <p className="text-xs text-muted-foreground">
-            Used when there&apos;s no photo. Leave unset to use the asset type&apos;s icon.
+            {inheritTypeIcon
+              ? "Used when there's no photo. Leave unset to use the asset type's icon."
+              : "Used when there's no photo."}
           </p>
           <IconGrid
             value={icon}
             onSelect={pickIcon}
-            noIconLabel="Use type's icon"
+            noIconLabel={inheritTypeIcon ? "Use type's icon" : "No icon"}
             color={color}
             onColorChange={pickColor}
           />

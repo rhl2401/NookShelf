@@ -35,7 +35,7 @@ type AssetRow = {
   icon: string | null;
   iconColor: string | null;
   primaryPictureId: string | null;
-  assetType: { name: string; icon: string | null; iconColor: string | null };
+  assetType: { name: string; icon: string | null; iconColor: string | null; inheritIcon: boolean };
   location: { id: string; name: string } | null;
   assignedTo: { id: string; name: string } | null;
   tags: Array<{ tag: { name: string } }>;
@@ -232,6 +232,7 @@ export function AssetsTable({
                       color={asset.iconColor}
                       typeIcon={asset.assetType.icon}
                       typeColor={asset.assetType.iconColor}
+                      inheritTypeIcon={asset.assetType.inheritIcon}
                       alt={asset.name}
                       size="sm"
                     />
