@@ -29,6 +29,7 @@ type ImportSummary = {
   locations: { created: number; updated: number };
   assets: { created: number; updated: number };
   kits: { created: number; updated: number };
+  consumables: { created: number; updated: number };
   warnings: string[];
 };
 
@@ -79,8 +80,8 @@ export function DataIoCard() {
           Import / export <WorkspaceBadge />
         </CardTitle>
         <CardDescription>
-          Back up or bulk-edit your locations, asset types, assets, and kits. Doesn&apos;t include
-          people, roles, or checkout history.
+          Back up or bulk-edit your locations, asset types, assets, kits, and consumables.
+          Doesn&apos;t include people, roles, or checkout history.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -172,6 +173,9 @@ export function DataIoCard() {
                 </Badge>
                 <Badge variant="outline">
                   Kits +{result.kits.created} / ~{result.kits.updated}
+                </Badge>
+                <Badge variant="outline">
+                  Consumables +{result.consumables.created} / ~{result.consumables.updated}
                 </Badge>
               </div>
               {result.warnings.length > 0 && (

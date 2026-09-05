@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { addDays } from "date-fns";
 
 export default async function DashboardPage() {
+  const session = await auth();
+  const canViewConsumables = Boolean(session?.user.permissions.includes("consumable:view"));
+
   const now = new Date();
   const warrantyHorizon = addDays(now, 30);
 
@@ -14,6 +18,7 @@ export default async function DashboardPage() {
     overdueCheckouts,
     warrantyExpiring,
     byLocation,
+    consumablesWithThreshold,
   ] = await Promise.all([
     prisma.asset.count(),
     prisma.checkout.count({ where: { status: "OUT" } }),
@@ -33,7 +38,17 @@ export default async function DashboardPage() {
       orderBy: { name: "asc" },
       take: 8,
     }),
+    canViewConsumables
+      ? prisma.consumable.findMany({
+          where: { lowStockThreshold: { not: null } },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
   ]);
+
+  const lowStockConsumables = consumablesWithThreshold.filter(
+    (c) => c.lowStockThreshold != null && c.quantity <= c.lowStockThreshold,
+  );
 
   const stats = [
     { label: "Total assets", value: totalAssets, href: "/assets" },
@@ -111,6 +126,26 @@ export default async function DashboardPage() {
             ))}
           </CardContent>
         </Card>
+        {canViewConsumables && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Consumables running low</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {lowStockConsumables.length === 0 && (
+                <p className="text-sm text-muted-foreground">Nothing running low right now.</p>
+              )}
+              {lowStockConsumables.map((c) => (
+                <div key={c.id} className="flex items-center justify-between text-sm">
+                  <p className="font-medium">{c.name}</p>
+                  <Badge variant="destructive">
+                    {c.quantity} left (threshold {c.lowStockThreshold})
+                  </Badge>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card>

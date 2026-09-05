@@ -3,7 +3,7 @@
 </p>
 
 Self-hosted asset tracking for home and small-team use — locations, asset types with custom
-fields, kits, checkout/return, QR labeling, and notifications.
+fields, kits, consumables, checkout/return, QR labeling, and notifications.
 
 ## Running with Docker (recommended)
 
@@ -146,10 +146,10 @@ if the deployment has no outbound internet access.
 ## Data import / export
 
 Settings → Import / export (requires the `settings:manage` permission) can back up or bulk-edit
-locations, asset types, assets, and kits — not people, roles, or checkout history — in JSON, a
-CSV zip (one file per entity), or Excel (.xlsx, one sheet per entity). Matches existing records by
-name/asset tag, so re-importing the same file is safe and idempotent. Download the example file in
-any format from the same page to see the exact structure expected.
+locations, asset types, assets, kits, and consumables — not people, roles, or checkout history —
+in JSON, a CSV zip (one file per entity), or Excel (.xlsx, one sheet per entity). Matches existing
+records by name/asset tag, so re-importing the same file is safe and idempotent. Download the
+example file in any format from the same page to see the exact structure expected.
 
 ## Notable commands
 

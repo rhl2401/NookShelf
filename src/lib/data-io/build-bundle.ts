@@ -25,7 +25,7 @@ async function buildLocationPaths(): Promise<Map<string, string>> {
 }
 
 export async function buildExportBundle(): Promise<ExportBundle> {
-  const [locations, assetTypes, assets, kits] = await Promise.all([
+  const [locations, assetTypes, assets, kits, consumables] = await Promise.all([
     prisma.location.findMany({ orderBy: { name: "asc" } }),
     prisma.assetType.findMany({ orderBy: { name: "asc" } }),
     prisma.asset.findMany({
@@ -42,6 +42,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
       include: { members: { include: { asset: { select: { assetTag: true } } } } },
       orderBy: { name: "asc" },
     }),
+    prisma.consumable.findMany({ orderBy: { name: "asc" } }),
   ]);
 
   const locationPaths = await buildLocationPaths();
@@ -79,6 +80,13 @@ export async function buildExportBundle(): Promise<ExportBundle> {
       name: k.name,
       description: k.description,
       memberAssetTags: k.members.map((m) => m.asset.assetTag),
+    })),
+    consumables: consumables.map((c) => ({
+      name: c.name,
+      category: c.category,
+      quantity: c.quantity,
+      lowStockThreshold: c.lowStockThreshold,
+      location: c.locationId ? (locationPaths.get(c.locationId) ?? null) : null,
     })),
   };
 }

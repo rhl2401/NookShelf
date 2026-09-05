@@ -172,8 +172,9 @@ model Location {
   primaryPictureId String?
   primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
 
-  notes  String?
-  assets Asset[]
+  notes       String?
+  assets      Asset[]
+  consumables Consumable[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -340,10 +341,11 @@ model Picture {
   thumbPath      String?
   thumbSizeBytes Int?
 
-  assets     Asset[]
-  assetTypes AssetType[]
-  kits       Kit[]
-  locations  Location[]
+  assets      Asset[]
+  assetTypes  AssetType[]
+  kits        Kit[]
+  locations   Location[]
+  consumables Consumable[]
 
   createdAt DateTime @default(now())
 
@@ -412,6 +414,34 @@ model KitMember {
   addedAt DateTime @default(now())
 
   @@id([kitId, assetId])
+}
+
+// ---------------------------------------------------------------------------
+// Consumables — identical, stock-tracked items that get used up (soap, labels,
+// etc.), unlike Assets which are individually tracked. One row per product,
+// with a quantity-on-hand count instead of one row per physical item.
+// ---------------------------------------------------------------------------
+
+model Consumable {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  category  String?
+  icon      String?
+  iconColor String? // key into the icon color palette — see src/lib/icon-colors.ts
+
+  primaryPictureId String?
+  primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
+
+  quantity          Int  @default(0)
+  lowStockThreshold Int?
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([locationId])
 }
 
 enum CheckoutKind {

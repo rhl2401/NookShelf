@@ -3,8 +3,9 @@ import type { ExportBundle } from "@/lib/data-io/types";
 
 // A small, self-contained example — illustrates locations with nesting,
 // a built-in type (Cable), a custom type with its own fields (Laptop),
-// tags, a parent/child relationship, and a kit. Not queried from any real
-// data, so it's safe to hand out as a downloadable template.
+// tags, a parent/child relationship, a kit, and a couple of consumables
+// (one with a location and low-stock threshold, one without). Not queried
+// from any real data, so it's safe to hand out as a downloadable template.
 export const EXAMPLE_BUNDLE: ExportBundle = {
   meta: { version: 1 },
   locations: [
@@ -107,6 +108,22 @@ export const EXAMPLE_BUNDLE: ExportBundle = {
       name: "Travel Kit",
       description: "Grab-and-go bag for work trips",
       memberAssetTags: ["AM-EXAMPLE001", "AM-EXAMPLE002"],
+    },
+  ],
+  consumables: [
+    {
+      name: "Hand soap",
+      category: "Cleaning supplies",
+      quantity: 4,
+      lowStockThreshold: 2,
+      location: "Home / Office",
+    },
+    {
+      name: "Address labels",
+      category: "Office supplies",
+      quantity: 1,
+      lowStockThreshold: null,
+      location: null,
     },
   ],
 };

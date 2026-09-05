@@ -99,12 +99,27 @@ export async function bundleToXlsx(bundle: ExportBundle): Promise<Buffer> {
     ),
   );
 
+  addSheet(
+    workbook,
+    "Consumables",
+    ["name", "category", "quantity", "lowStockThreshold", "location"],
+    bundle.consumables.map((c) =>
+      sanitizeRow({
+        name: c.name,
+        category: c.category ?? "",
+        quantity: String(c.quantity ?? 0),
+        lowStockThreshold: c.lowStockThreshold != null ? String(c.lowStockThreshold) : "",
+        location: c.location ?? "",
+      }),
+    ),
+  );
+
   const readme = workbook.addWorksheet("README");
   readme.getColumn(1).width = 100;
   [
     "NookShelf data export (XLSX).",
     "",
-    "Sheets: Locations, AssetTypes, Assets, Kits.",
+    "Sheets: Locations, AssetTypes, Assets, Kits, Consumables.",
     '"path" / "location" columns use " / " to separate nested location names, e.g. "House / Garage / Shelf 3".',
     '"tags" / "memberAssetTags" columns are pipe-separated, e.g. "usb|cable|black".',
     '"fieldSchemaJson" / "customFieldsJson" columns hold JSON — edit carefully.',
@@ -167,6 +182,7 @@ export async function xlsxToBundle(buffer: Buffer): Promise<ExportBundle> {
   const assetTypeRows = readSheetAsObjects(workbook.getWorksheet("AssetTypes"));
   const assetRows = readSheetAsObjects(workbook.getWorksheet("Assets"));
   const kitRows = readSheetAsObjects(workbook.getWorksheet("Kits"));
+  const consumableRows = readSheetAsObjects(workbook.getWorksheet("Consumables"));
 
   const bundle: ExportBundle = {
     meta: { version: 1 },
@@ -206,6 +222,15 @@ export async function xlsxToBundle(buffer: Buffer): Promise<ExportBundle> {
         name: r.name,
         description: r.description || null,
         memberAssetTags: splitList(r.memberAssetTags),
+      })),
+    consumables: consumableRows
+      .filter((r) => r.name)
+      .map((r) => ({
+        name: r.name,
+        category: r.category || null,
+        quantity: r.quantity ? Number(r.quantity) : 0,
+        lowStockThreshold: r.lowStockThreshold ? Number(r.lowStockThreshold) : null,
+        location: r.location || null,
       })),
   };
 
