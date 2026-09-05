@@ -8,6 +8,19 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.9.0
+
+- Asset types now have an "Assets of this type inherit its icon by default" toggle. Previously,
+  an asset with no icon/picture of its own always fell back to showing its asset type's icon —
+  fine for something like Cable where every asset really does share one look, but misleading for
+  a catch-all type like Generic where the members are too varied for one shared icon to make
+  sense. Turn it off and un-iconed assets of that type show no icon instead.
+- The built-in "Generic" type now ships with inheritance turned off by default, both for new
+  installs and (via a one-time data migration) existing ones.
+- Schema change: adds `AssetType.inheritIcon` (defaults to `true`, preserving today's behavior for
+  every existing type except Generic). Applied automatically via `prisma migrate deploy` — no
+  manual steps.
+
 ## 1.8.0
 
 - New **Consumables** section: track identical, stock-tracked items that get used up (soap,

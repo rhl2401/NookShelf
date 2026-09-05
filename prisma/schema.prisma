@@ -193,13 +193,17 @@ model AssetType {
   category    String?
   icon        String?
   iconColor   String? // key into the icon color palette, e.g. "blue" — see src/lib/icon-colors.ts
+  // When true (the default), an Asset of this type with no icon/picture of
+  // its own falls back to showing this type's icon. Turn off for types whose
+  // members are too varied for one shared icon to make sense (e.g. Generic).
+  inheritIcon Boolean @default(true)
   isBuiltIn   Boolean @default(false)
   // Array of { key, label, type, required, options?, unit? } — see src/lib/asset-fields.ts
   fieldSchema Json    @default("[]")
 
   // Display only for this AssetType (asset-types list/cards) — deliberately
-  // NOT inherited by its Assets, unlike icon/iconColor which Assets do fall
-  // back to when they have no picture or icon override of their own.
+  // NOT inherited by its Assets, unlike icon/iconColor which Assets fall back
+  // to (when inheritIcon is true) if they have no picture or icon override.
   primaryPictureId String?
   primaryPicture   Picture? @relation(fields: [primaryPictureId], references: [id], onDelete: SetNull)
 

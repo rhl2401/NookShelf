@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DialogTriggerButton } from "@/components/dialog-trigger-button";
 import { FieldSchemaEditor } from "@/components/asset-types/field-schema-editor";
 import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
@@ -37,6 +38,7 @@ export function AssetTypeFormDialog({
     category: string | null;
     icon?: string | null;
     iconColor?: string | null;
+    inheritIcon?: boolean;
     primaryPictureId?: string | null;
     fieldSchema: unknown;
   };
@@ -48,6 +50,7 @@ export function AssetTypeFormDialog({
   const [category, setCategory] = useState(assetType?.category ?? "");
   const [icon, setIcon] = useState<string | null>(assetType?.icon ?? null);
   const [iconColor, setIconColor] = useState<string | null>(assetType?.iconColor ?? null);
+  const [inheritIcon, setInheritIcon] = useState(assetType?.inheritIcon ?? true);
   const [pictureId, setPictureId] = useState<string | null>(assetType?.primaryPictureId ?? null);
   const [fields, setFields] = useState<AssetFieldDef[]>(
     (assetType?.fieldSchema as AssetFieldDef[] | undefined) ?? [],
@@ -84,6 +87,7 @@ export function AssetTypeFormDialog({
             category,
             icon: icon ?? undefined,
             iconColor: iconColor ?? undefined,
+            inheritIcon,
             primaryPictureId: pictureId ?? undefined,
             fieldSchema: cleanedFields,
           });
@@ -93,6 +97,7 @@ export function AssetTypeFormDialog({
             category,
             icon: icon ?? undefined,
             iconColor: iconColor ?? undefined,
+            inheritIcon,
             primaryPictureId: pictureId ?? undefined,
             fieldSchema: cleanedFields,
           });
@@ -177,6 +182,18 @@ export function AssetTypeFormDialog({
             <p className="text-xs text-muted-foreground">
               Shown only on the asset type itself — assets of this type keep using their own
               picture or icon, never this one.
+            </p>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={inheritIcon}
+                onCheckedChange={(checked) => setInheritIcon(checked === true)}
+              />
+              Assets of this type inherit its icon by default
+            </label>
+            <p className="text-xs text-muted-foreground">
+              {inheritIcon
+                ? "An asset with no icon of its own shows this type's icon. Turn off if this type is too varied for one shared icon to make sense."
+                : "An asset with no icon of its own shows no icon, instead of this type's."}
             </p>
           </div>
 

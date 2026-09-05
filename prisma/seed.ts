@@ -31,6 +31,9 @@ async function main() {
       category: "Uncategorized",
       isBuiltIn: true,
       fieldSchema: [],
+      // Generic covers too broad a mix of items for one shared icon to make
+      // sense on every un-iconed asset of that type.
+      inheritIcon: false,
     },
   });
   console.log("Seeded built-in asset type (Generic).");

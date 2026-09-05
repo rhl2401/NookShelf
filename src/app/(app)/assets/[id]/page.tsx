@@ -89,6 +89,7 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                 color={asset.iconColor}
                 typeIcon={asset.assetType.icon}
                 typeColor={asset.assetType.iconColor}
+                inheritTypeIcon={asset.assetType.inheritIcon}
                 pictureId={asset.primaryPictureId}
                 myPictures={myPictures}
                 workspacePictures={workspacePictures}
@@ -100,6 +101,7 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                 color={asset.iconColor}
                 typeIcon={asset.assetType.icon}
                 typeColor={asset.assetType.iconColor}
+                inheritTypeIcon={asset.assetType.inheritIcon}
                 alt={asset.name}
                 size="xl"
               />
