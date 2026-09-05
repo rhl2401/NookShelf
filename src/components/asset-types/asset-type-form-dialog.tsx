@@ -130,7 +130,12 @@ export function AssetTypeFormDialog({
                 <button
                   type="button"
                   onClick={startBlank}
-                  className="flex items-center gap-2 rounded-lg border border-dashed border-muted-foreground/30 px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50"
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border border-dashed px-2.5 py-1.5 text-sm transition-colors hover:bg-muted/50",
+                    templateName === null
+                      ? "border-primary bg-primary/5"
+                      : "border-muted-foreground/30 text-muted-foreground",
+                  )}
                 >
                   Start blank
                 </button>
