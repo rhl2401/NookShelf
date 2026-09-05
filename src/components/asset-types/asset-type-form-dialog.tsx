@@ -127,6 +127,9 @@ export function AssetTypeFormDialog({
             <div className="grid gap-1.5">
               <Label>Start from a template</Label>
               <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="ghost" size="sm" onClick={startBlank}>
+                  Start blank
+                </Button>
                 {STARTER_TEMPLATES.map((t) => (
                   <button
                     key={t.name}
@@ -141,11 +144,6 @@ export function AssetTypeFormDialog({
                     {t.name}
                   </button>
                 ))}
-                {templateName && (
-                  <Button type="button" variant="ghost" size="sm" onClick={startBlank}>
-                    Start blank
-                  </Button>
-                )}
               </div>
             </div>
           )}
