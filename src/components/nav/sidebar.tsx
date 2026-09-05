@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Permission } from "@/lib/permissions";
+import packageJson from "../../../package.json";
 
 type NavItem = {
   href: string;
@@ -56,36 +57,41 @@ export function Sidebar({ permissions }: { permissions: string[] }) {
   const permissionSet = new Set(permissions);
 
   return (
-    <nav className="flex h-full w-60 shrink-0 flex-col gap-1 border-r bg-background px-3 py-4">
-      {NAV_ITEMS.filter((item) => !item.permission || permissionSet.has(item.permission)).map(
-        (item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              <Icon className="size-4" />
-              <span className="flex-1">{item.label}</span>
-              {item.adminOnly && (
-                <Badge
-                  variant="outline"
-                  className="shrink-0 border-current/30 bg-transparent px-1.5 py-0 text-[10px] font-normal text-current opacity-70"
-                >
-                  Admin
-                </Badge>
-              )}
-            </Link>
-          );
-        },
-      )}
+    <nav className="flex h-full w-60 shrink-0 flex-col border-r bg-background px-3 py-4">
+      <div className="flex flex-col gap-1">
+        {NAV_ITEMS.filter((item) => !item.permission || permissionSet.has(item.permission)).map(
+          (item) => {
+            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon className="size-4" />
+                <span className="flex-1">{item.label}</span>
+                {item.adminOnly && (
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 border-current/30 bg-transparent px-1.5 py-0 text-[10px] font-normal text-current opacity-70"
+                  >
+                    Admin
+                  </Badge>
+                )}
+              </Link>
+            );
+          },
+        )}
+      </div>
+      <p className="mt-auto px-3 pt-4 text-[10px] text-muted-foreground/60 select-none">
+        v{packageJson.version}
+      </p>
     </nav>
   );
 }
