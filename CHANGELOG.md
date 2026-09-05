@@ -8,6 +8,21 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.8.0
+
+- New **Consumables** section: track identical, stock-tracked items that get used up (soap,
+  labels, and the like) — one row per product with a quantity-on-hand count, instead of one row
+  per physical item like Assets. Set an optional low-stock threshold to get a warning badge in
+  the list and a "Consumables running low" card on the Dashboard. A quick +/- stepper adjusts
+  quantity without opening the edit dialog. Gated behind new `consumable:view`/`consumable:manage`
+  permissions (Admin gets both automatically; Manager gets both; Member and Viewer get
+  `consumable:view`).
+- Consumables are included in the data import/export bundle (JSON/CSV/XLSX), alongside locations,
+  asset types, assets, and kits.
+- Schema change: adds the `Consumable` model. Applied automatically via `prisma migrate deploy` —
+  no manual steps. Existing roles get the new permissions automatically on next restart (the seed
+  script re-upserts every system role's permissions on startup).
+
 ## 1.7.0
 
 - The "New asset type" dialog now offers the Cable/Vehicle/Battery starter templates directly —

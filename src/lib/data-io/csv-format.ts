@@ -7,6 +7,7 @@ import {
   type AssetTypeRow,
   type AssetRow,
   type KitRow,
+  type ConsumableRow,
 } from "@/lib/data-io/types";
 import { sanitizeRow } from "@/lib/data-io/sanitize-cell";
 
@@ -61,16 +62,29 @@ function kitsToRows(kits: KitRow[]) {
   );
 }
 
+function consumablesToRows(consumables: ConsumableRow[]) {
+  return consumables.map((c) =>
+    sanitizeRow({
+      name: c.name,
+      category: c.category ?? "",
+      quantity: String(c.quantity ?? 0),
+      lowStockThreshold: c.lowStockThreshold != null ? String(c.lowStockThreshold) : "",
+      location: c.location ?? "",
+    }),
+  );
+}
+
 export async function bundleToCsvZip(bundle: ExportBundle): Promise<Buffer> {
   const zip = new JSZip();
   zip.file("locations.csv", Papa.unparse(locationsToRows(bundle.locations)));
   zip.file("asset-types.csv", Papa.unparse(assetTypesToRows(bundle.assetTypes)));
   zip.file("assets.csv", Papa.unparse(assetsToRows(bundle.assets)));
   zip.file("kits.csv", Papa.unparse(kitsToRows(bundle.kits)));
+  zip.file("consumables.csv", Papa.unparse(consumablesToRows(bundle.consumables)));
   zip.file(
     "README.txt",
     "NookShelf data export (CSV).\n\n" +
-      "Four files: locations.csv, asset-types.csv, assets.csv, kits.csv.\n" +
+      "Five files: locations.csv, asset-types.csv, assets.csv, kits.csv, consumables.csv.\n" +
       "- \"path\" / \"location\" columns use \" / \" to separate nested location names, e.g. \"House / Garage / Shelf 3\".\n" +
       "- \"tags\" / \"memberAssetTags\" columns are pipe-separated, e.g. \"usb|cable|black\".\n" +
       "- \"fieldSchemaJson\" / \"customFieldsJson\" columns hold JSON — edit carefully.\n" +
@@ -109,13 +123,20 @@ export async function csvZipToBundle(buffer: Buffer): Promise<ExportBundle> {
     return parseCsv<T>(await file.async("string"));
   }
 
-  const [locationRows, assetTypeRows, assetRows, kitRows] = await Promise.all([
+  const [locationRows, assetTypeRows, assetRows, kitRows, consumableRows] = await Promise.all([
     readCsv<{ path: string; notes: string }>("locations.csv"),
     readCsv<{ name: string; category: string; icon: string; fieldSchemaJson: string }>(
       "asset-types.csv",
     ),
     readCsv<Record<string, string>>("assets.csv"),
     readCsv<{ name: string; description: string; memberAssetTags: string }>("kits.csv"),
+    readCsv<{
+      name: string;
+      category: string;
+      quantity: string;
+      lowStockThreshold: string;
+      location: string;
+    }>("consumables.csv"),
   ]);
 
   const bundle: ExportBundle = {
@@ -156,6 +177,15 @@ export async function csvZipToBundle(buffer: Buffer): Promise<ExportBundle> {
         name: r.name,
         description: r.description || null,
         memberAssetTags: splitList(r.memberAssetTags),
+      })),
+    consumables: consumableRows
+      .filter((r) => r.name)
+      .map((r) => ({
+        name: r.name,
+        category: r.category || null,
+        quantity: r.quantity ? Number(r.quantity) : 0,
+        lowStockThreshold: r.lowStockThreshold ? Number(r.lowStockThreshold) : null,
+        location: r.location || null,
       })),
   };
 

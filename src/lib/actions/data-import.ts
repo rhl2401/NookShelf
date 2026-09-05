@@ -11,6 +11,7 @@ export type ImportSummary = {
   locations: { created: number; updated: number };
   assets: { created: number; updated: number };
   kits: { created: number; updated: number };
+  consumables: { created: number; updated: number };
   warnings: string[];
 };
 
@@ -57,6 +58,7 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportSummary>
       const allPaths = new Set<string>([
         ...bundle.locations.map((l) => l.path),
         ...bundle.assets.map((a) => a.location).filter((p): p is string => Boolean(p)),
+        ...bundle.consumables.map((c) => c.location).filter((p): p is string => Boolean(p)),
       ]);
 
       const pathToId = new Map<string, string>();
@@ -226,11 +228,39 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportSummary>
         }
       }
 
+      // --- Consumables ---------------------------------------------------
+      let consumablesCreated = 0;
+      let consumablesUpdated = 0;
+
+      for (const row of bundle.consumables) {
+        const locationId = row.location ? (pathToId.get(row.location) ?? null) : null;
+        if (row.location && !locationId) {
+          warnings.push(`Consumable "${row.name}": couldn't resolve location "${row.location}".`);
+        }
+
+        const data = {
+          category: row.category || null,
+          quantity: row.quantity ?? 0,
+          lowStockThreshold: row.lowStockThreshold ?? null,
+          locationId,
+        };
+
+        const existing = await tx.consumable.findUnique({ where: { name: row.name } });
+        if (existing) {
+          await tx.consumable.update({ where: { id: existing.id }, data });
+          consumablesUpdated++;
+        } else {
+          await tx.consumable.create({ data: { name: row.name, ...data } });
+          consumablesCreated++;
+        }
+      }
+
       return {
         assetTypes: { created: assetTypesCreated, updated: assetTypesUpdated },
         locations: { created: locationsCreated, updated: locationsUpdated },
         assets: { created: assetsCreated, updated: assetsUpdated },
         kits: { created: kitsCreated, updated: kitsUpdated },
+        consumables: { created: consumablesCreated, updated: consumablesUpdated },
         warnings,
       };
     },
