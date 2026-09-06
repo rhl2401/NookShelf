@@ -8,6 +8,17 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.11.1
+
+- Fixes blurry pictures/avatars when the uploaded image is smaller than the configured picture
+  size (e.g. a 256×256 upload with the workspace picture size set to 512px) — it was being
+  upscaled and permanently baked into the stored file at the larger size, degrading quality for
+  no benefit (upscaling can't add detail that wasn't there). Small images now stay at their native
+  resolution instead; the browser scales them for display same as before, but the stored file
+  itself is never artificially blurred.
+- No schema changes. No manual steps — existing pictures are unaffected (this only changes
+  processing for new uploads); re-upload one if you want an existing blurry picture reprocessed.
+
 ## 1.11.0
 
 - The Pictures page now accepts drag-and-drop uploads: drop an image file anywhere in the page's

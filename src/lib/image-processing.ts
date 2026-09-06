@@ -6,12 +6,19 @@ import { MAX_LOGO_DIMENSION } from "@/lib/branding-shared";
 export const AVATAR_SIZE = 256;
 const WEBP_QUALITY = 82;
 
-async function cropToSquareWebp(input: Buffer, size: number): Promise<Buffer> {
-  return sharp(input)
+async function cropToSquareWebp(
+  input: Buffer,
+  size: number,
+): Promise<{ buffer: Buffer; width: number; height: number }> {
+  // withoutEnlargement keeps a source smaller than `size` at its native
+  // resolution instead of upscaling it — upscaling can't add detail that
+  // wasn't there, it just bakes blur permanently into the stored webp.
+  const { data, info } = await sharp(input)
     .rotate() // apply EXIF orientation before cropping
-    .resize(size, size, { fit: "cover", position: "attention" })
+    .resize(size, size, { fit: "cover", position: "attention", withoutEnlargement: true })
     .webp({ quality: WEBP_QUALITY })
-    .toBuffer();
+    .toBuffer({ resolveWithObject: true });
+  return { buffer: data, width: info.width, height: info.height };
 }
 
 /** Center-crops to a single square size, downscales, and re-encodes as webp — used for avatars. */
@@ -19,8 +26,7 @@ export async function processImageUpload(
   input: Buffer,
   size: number,
 ): Promise<{ buffer: Buffer; width: number; height: number }> {
-  const buffer = await cropToSquareWebp(input, size);
-  return { buffer, width: size, height: size };
+  return cropToSquareWebp(input, size);
 }
 
 /**
@@ -36,15 +42,12 @@ export async function processPictureUpload(
   main: { buffer: Buffer; width: number; height: number };
   thumb: { buffer: Buffer; width: number; height: number };
 }> {
-  const [mainBuffer, thumbBuffer] = await Promise.all([
+  const [main, thumb] = await Promise.all([
     cropToSquareWebp(input, size),
     cropToSquareWebp(input, THUMB_SIZE),
   ]);
 
-  return {
-    main: { buffer: mainBuffer, width: size, height: size },
-    thumb: { buffer: thumbBuffer, width: THUMB_SIZE, height: THUMB_SIZE },
-  };
+  return { main, thumb };
 }
 
 /**
