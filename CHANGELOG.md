@@ -8,6 +8,12 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.10.0
+
+- The sidebar now shows the running app version, small and muted at the bottom of the nav — a
+  quiet way to confirm what's actually deployed without digging through logs.
+- No schema changes. No manual steps.
+
 ## 1.9.0
 
 - Asset types now have an "Assets of this type inherit its icon by default" toggle. Previously,
