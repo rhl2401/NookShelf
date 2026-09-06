@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Upload, Trash2, Share2, Undo2, Sparkles, Pencil, Search } from "lucide-react";
+import { Upload, Trash2, Share2, Undo2, Sparkles, Pencil, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,9 @@ import {
   renamePicture,
   flushUnusedPictures,
 } from "@/lib/actions/pictures";
+import { cn } from "@/lib/utils";
+
+type PictureScope = "PERSONAL" | "WORKSPACE";
 
 type PictureItem = { id: string; name: string | null; usedCount: number; ownerName?: string | null };
 
@@ -41,6 +44,13 @@ export function PicturesManager({
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const unusedCount = myPictures.filter((p) => p.usedCount === 0).length;
 
+  // Tracks nested dragenter/dragleave pairs (they fire for every descendant
+  // element the cursor passes over) so the overlay only hides once the drag
+  // has actually left the whole content area, not just one child element.
+  const dragCounterRef = useRef(0);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [activeDropZone, setActiveDropZone] = useState<PictureScope | null>(null);
+
   function setSearch(value: string) {
     setQuery(value);
     const params = new URLSearchParams(searchParams.toString());
@@ -53,22 +63,65 @@ export function PicturesManager({
     fileInputRef.current?.click();
   }
 
-  function onFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function uploadFile(file: File, scope: PictureScope) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
     const formData = new FormData();
     formData.set("file", file);
     startTransition(async () => {
       try {
-        await uploadPicture(formData, "PERSONAL");
-        toast.success("Picture added");
+        await uploadPicture(formData, scope);
+        toast.success(scope === "WORKSPACE" ? "Picture added to workspace" : "Picture added");
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Upload failed");
-      } finally {
-        if (fileInputRef.current) fileInputRef.current.value = "";
       }
     });
+  }
+
+  function onFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file, "PERSONAL");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function hasFiles(e: React.DragEvent) {
+    return Array.from(e.dataTransfer.types).includes("Files");
+  }
+
+  function onDragEnter(e: React.DragEvent) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragCounterRef.current += 1;
+    setIsDraggingFile(true);
+  }
+
+  function onDragOver(e: React.DragEvent) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+  }
+
+  function onDragLeave(e: React.DragEvent) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragCounterRef.current = Math.max(0, dragCounterRef.current - 1);
+    if (dragCounterRef.current === 0) setIsDraggingFile(false);
+  }
+
+  function resetDragState() {
+    dragCounterRef.current = 0;
+    setIsDraggingFile(false);
+    setActiveDropZone(null);
+  }
+
+  function onDropZone(e: React.DragEvent, scope: PictureScope) {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    resetDragState();
+    if (file) uploadFile(file, scope);
   }
 
   function onDelete(picture: PictureItem) {
@@ -136,7 +189,52 @@ export function PicturesManager({
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div
+      className="relative flex flex-col gap-8"
+      onDragEnter={onDragEnter}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => onDropZone(e, "PERSONAL")}
+    >
+      {isDraggingFile && (
+        <div className="absolute inset-0 z-50 flex gap-2 rounded-xl border-2 border-dashed border-primary/50 bg-background/95 p-2 backdrop-blur-sm">
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setActiveDropZone("PERSONAL");
+            }}
+            onDrop={(e) => onDropZone(e, "PERSONAL")}
+            className={cn(
+              "flex flex-1 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors",
+              activeDropZone === "PERSONAL"
+                ? "border-primary bg-primary/10"
+                : "border-muted-foreground/25",
+            )}
+          >
+            <Upload className="size-6 text-muted-foreground" />
+            <p className="text-sm font-medium">Drop to add to My pictures</p>
+          </div>
+          {canShare && (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setActiveDropZone("WORKSPACE");
+              }}
+              onDrop={(e) => onDropZone(e, "WORKSPACE")}
+              className={cn(
+                "flex flex-1 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors",
+                activeDropZone === "WORKSPACE"
+                  ? "border-primary bg-primary/10"
+                  : "border-muted-foreground/25",
+              )}
+            >
+              <Users className="size-6 text-muted-foreground" />
+              <p className="text-sm font-medium">Drop to add to Workspace pictures</p>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="relative w-64">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
