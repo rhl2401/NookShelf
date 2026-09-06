@@ -8,6 +8,15 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.11.0
+
+- The Pictures page now accepts drag-and-drop uploads: drop an image file anywhere in the page's
+  content (not the sidebar/topbar) to upload it. While dragging, the content area splits into two
+  drop zones — one for "My pictures" (personal), one for "Workspace pictures" — so which one you
+  drop on decides where it lands. The workspace zone only appears if you have the `picture:share`
+  permission, matching who could already upload there via the existing "Upload" button + share step.
+- No schema changes. No manual steps.
+
 ## 1.10.0
 
 - The sidebar now shows the running app version, small and muted at the bottom of the nav — a
