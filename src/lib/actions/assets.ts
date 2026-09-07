@@ -334,6 +334,17 @@ export async function deleteAttachment(attachmentId: string) {
   revalidatePath(`/assets/${attachment.assetId}`);
 }
 
+export async function renameAttachment(attachmentId: string, name: string) {
+  await requirePermission("asset:manage");
+  const trimmed = name.trim().slice(0, 200);
+  if (!trimmed) throw new Error("Name can't be empty.");
+  const attachment = await prisma.attachment.update({
+    where: { id: attachmentId },
+    data: { originalName: trimmed },
+  });
+  revalidatePath(`/assets/${attachment.assetId}`);
+}
+
 export async function setAssetIcon(
   assetId: string,
   data: { icon?: string | null; iconColor?: string | null },
