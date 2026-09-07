@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PictureRow, type PictureRef } from "@/components/pictures/picture-row";
-import { uploadPicture, searchPictures } from "@/lib/actions/pictures";
+import { uploadPicture, uploadPictureFromUrl, searchPictures } from "@/lib/actions/pictures";
 
 /**
  * Upload-new + search-across-your-and-workspace-pictures body, shared by the
@@ -28,6 +28,8 @@ export function PictureSearchPanel({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, startUpload] = useTransition();
+  const [urlDraft, setUrlDraft] = useState("");
+  const [addingFromUrl, startAddFromUrl] = useTransition();
   const [query, setQuery] = useState("");
   const [searching, startSearchTransition] = useTransition();
   const [results, setResults] = useState<{ mine: PictureRef[]; workspace: PictureRef[] } | null>(
@@ -73,7 +75,21 @@ export function PictureSearchPanel({
     });
   }
 
-  const busy = disabled || uploading;
+  function addFromUrl() {
+    const url = urlDraft.trim();
+    if (!url) return;
+    startAddFromUrl(async () => {
+      try {
+        const picture = await uploadPictureFromUrl(url, "PERSONAL");
+        onSelect(picture.id);
+        setUrlDraft("");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Couldn't add that image");
+      }
+    });
+  }
+
+  const busy = disabled || uploading || addingFromUrl;
 
   return (
     <div className="flex flex-col gap-2">
@@ -87,6 +103,31 @@ export function PictureSearchPanel({
       <Button type="button" size="sm" variant="outline" className="self-start" onClick={pickFile} disabled={busy}>
         Upload new
       </Button>
+
+      <div className="flex gap-1.5">
+        <Input
+          placeholder="Or paste an image URL…"
+          value={urlDraft}
+          onChange={(e) => setUrlDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addFromUrl();
+            }
+          }}
+          className="h-8 text-xs"
+          disabled={busy}
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={addFromUrl}
+          disabled={busy || !urlDraft.trim()}
+        >
+          Add
+        </Button>
+      </div>
 
       <div className="relative">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
