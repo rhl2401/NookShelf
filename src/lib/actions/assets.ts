@@ -71,6 +71,19 @@ async function resolveTagIds(tx: Prisma.TransactionClient, names: string[]) {
   return ids;
 }
 
+/** Deletes any of `tagIds` that no longer have an AssetTag pointing at them. */
+async function pruneOrphanTags(tx: Prisma.TransactionClient, tagIds: string[]) {
+  if (tagIds.length === 0) return;
+  const stillUsed = await tx.assetTag.findMany({
+    where: { tagId: { in: tagIds } },
+    select: { tagId: true },
+    distinct: ["tagId"],
+  });
+  const usedIds = new Set(stillUsed.map((t) => t.tagId));
+  const orphanIds = tagIds.filter((id) => !usedIds.has(id));
+  if (orphanIds.length > 0) await tx.tag.deleteMany({ where: { id: { in: orphanIds } } });
+}
+
 async function loadFieldSchema(assetTypeId: string): Promise<AssetFieldDef[]> {
   const assetType = await prisma.assetType.findUniqueOrThrow({ where: { id: assetTypeId } });
   return (assetType.fieldSchema as AssetFieldDef[]) ?? [];
@@ -154,9 +167,12 @@ export async function updateAsset(assetId: string, input: AssetInput) {
   }
 
   const asset = await prisma.$transaction(async (tx) => {
+    const previousTagIds = (await tx.assetTag.findMany({ where: { assetId }, select: { tagId: true } })).map(
+      (t) => t.tagId,
+    );
     const tagIds = await resolveTagIds(tx, data.tags ?? []);
     await tx.assetTag.deleteMany({ where: { assetId } });
-    return tx.asset.update({
+    const updated = await tx.asset.update({
       where: { id: assetId },
       data: {
         name: data.name,
@@ -177,6 +193,8 @@ export async function updateAsset(assetId: string, input: AssetInput) {
         tags: { create: tagIds.map((tagId) => ({ tagId })) },
       },
     });
+    await pruneOrphanTags(tx, previousTagIds);
+    return updated;
   });
 
   let action: "UPDATE" | "MOVE" | "ASSIGN" | "STATUS_CHANGE" = "UPDATE";
@@ -207,7 +225,14 @@ export async function deleteAsset(assetId: string) {
     throw new Error("This asset is checked out — check it in before deleting.");
   }
 
-  await prisma.asset.delete({ where: { id: assetId } });
+  const previousTagIds = (
+    await prisma.assetTag.findMany({ where: { assetId }, select: { tagId: true } })
+  ).map((t) => t.tagId);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.asset.delete({ where: { id: assetId } });
+    await pruneOrphanTags(tx, previousTagIds);
+  });
   await writeAudit({
     entityType: "Asset",
     entityId: assetId,

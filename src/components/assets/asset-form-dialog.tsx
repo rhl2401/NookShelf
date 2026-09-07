@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { CustomFieldsForm, type CustomFieldValues } from "@/components/assets/custom-fields-form";
 import { TagsInput } from "@/components/ui-custom/tags-input";
+import { SuggestInput } from "@/components/ui-custom/suggest-input";
 import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
 import type { PictureRef } from "@/components/pictures/picture-row";
 import { createAsset, updateAsset } from "@/lib/actions/assets";
@@ -59,6 +60,8 @@ export function AssetFormDialog({
   defaultCurrency = "USD",
   myPictures = [],
   workspacePictures = [],
+  tagSuggestions = [],
+  vendorSuggestions = [],
 }: {
   trigger: React.ReactElement;
   assetTypes: AssetTypeOption[];
@@ -69,6 +72,8 @@ export function AssetFormDialog({
   defaultCurrency?: string;
   myPictures?: PictureRef[];
   workspacePictures?: PictureRef[];
+  tagSuggestions?: string[];
+  vendorSuggestions?: string[];
   asset?: {
     id: string;
     name: string;
@@ -399,7 +404,7 @@ export function AssetFormDialog({
             </div>
             <div className="grid gap-1.5">
               <Label>Vendor</Label>
-              <Input value={vendor} onChange={(e) => setVendor(e.target.value)} />
+              <SuggestInput value={vendor} onChange={setVendor} suggestions={vendorSuggestions} />
             </div>
             <div className="grid gap-1.5">
               <Label>Warranty expires</Label>
@@ -430,7 +435,12 @@ export function AssetFormDialog({
 
             <div className="col-span-2 grid gap-1.5">
               <Label>Tags</Label>
-              <TagsInput value={tags} onChange={setTags} placeholder="Type a tag, then comma or enter" />
+              <TagsInput
+                value={tags}
+                onChange={setTags}
+                placeholder="Type a tag, then comma or enter"
+                suggestions={tagSuggestions}
+              />
             </div>
 
             <div className="col-span-2 grid gap-1.5">

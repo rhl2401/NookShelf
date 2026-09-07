@@ -68,7 +68,7 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
                 ? { status: sortDir }
                 : { createdAt: "desc" };
 
-  const [assets, assetTypes, tree, people, allTags, myPictures, workspacePictures] =
+  const [assets, assetTypes, tree, people, allTags, vendors, myPictures, workspacePictures] =
     await Promise.all([
       prisma.asset.findMany({
         where,
@@ -85,6 +85,12 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
       buildLocationTree(),
       prisma.person.findMany({ where: { status: { not: "MERGED" } }, orderBy: { name: "asc" } }),
       prisma.tag.findMany({ orderBy: { name: "asc" }, select: { name: true } }),
+      prisma.asset.findMany({
+        where: { vendor: { not: null } },
+        distinct: ["vendor"],
+        orderBy: { vendor: "asc" },
+        select: { vendor: true },
+      }),
       session.user.personId
         ? prisma.picture.findMany({
             where: { scope: "PERSONAL", ownerId: session.user.personId },
@@ -161,6 +167,8 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
               defaultCurrency={getDefaultCurrency()}
               myPictures={myPictures}
               workspacePictures={workspacePictures}
+              tagSuggestions={allTags.map((t) => t.name)}
+              vendorSuggestions={vendors.map((a) => a.vendor).filter((v) => v != null)}
             />
           )}
         </div>
