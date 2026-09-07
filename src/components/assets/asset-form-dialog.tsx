@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { addDays, addMonths, addYears, format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +33,15 @@ import { createAsset, updateAsset } from "@/lib/actions/assets";
 import type { AssetFieldDef } from "@/lib/asset-fields";
 import { ASSET_STATUSES } from "@/lib/asset-status";
 import { CURRENCIES } from "@/lib/currency-shared";
+
+const WARRANTY_PRESETS: Array<{ label: string; addToDate: (d: Date) => Date }> = [
+  { label: "30 days", addToDate: (d) => addDays(d, 30) },
+  { label: "1 month", addToDate: (d) => addMonths(d, 1) },
+  { label: "6 months", addToDate: (d) => addMonths(d, 6) },
+  { label: "1 year", addToDate: (d) => addYears(d, 1) },
+  { label: "2 years", addToDate: (d) => addYears(d, 2) },
+  { label: "3 years", addToDate: (d) => addYears(d, 3) },
+];
 
 type AssetTypeOption = { id: string; name: string; fieldSchema: unknown };
 type LocationOption = { id: string; label: string };
@@ -398,6 +408,24 @@ export function AssetFormDialog({
                 value={warrantyExpiresAt}
                 onChange={(e) => setWarrantyExpiresAt(e.target.value)}
               />
+              <div className="flex flex-wrap gap-1">
+                {WARRANTY_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    disabled={!purchaseDate}
+                    onClick={() =>
+                      setWarrantyExpiresAt(
+                        format(preset.addToDate(parseISO(purchaseDate)), "yyyy-MM-dd"),
+                      )
+                    }
+                    className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+                    title={purchaseDate ? undefined : "Set a purchase date first"}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="col-span-2 grid gap-1.5">
