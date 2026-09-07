@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -9,23 +11,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ASSET_STATUSES, assetStatusLabel } from "@/lib/asset-status";
 
 export function AssetsFilterBar({
   assetTypes,
   flatLocations,
+  tags,
 }: {
   assetTypes: Array<{ id: string; name: string }>;
   flatLocations: Array<{ id: string; label: string }>;
+  tags: string[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const selectedTags = searchParams.getAll("tags");
 
   function setParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (!value || value === "all") params.delete(key);
     else params.set(key, value);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  function toggleTag(tag: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("tags");
+    const next = selectedTags.includes(tag)
+      ? selectedTags.filter((t) => t !== tag)
+      : [...selectedTags, tag];
+    for (const t of next) params.append("tags", t);
     router.push(`${pathname}?${params.toString()}`);
   }
 
@@ -93,6 +114,35 @@ export function AssetsFilterBar({
           ))}
         </SelectContent>
       </Select>
+      {tags.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="outline" className="w-40 justify-between font-normal">
+                <span className="truncate">
+                  {selectedTags.length === 0
+                    ? "All tags"
+                    : selectedTags.length === 1
+                      ? selectedTags[0]
+                      : `${selectedTags.length} tags`}
+                </span>
+                <ChevronDown className="size-4 text-muted-foreground" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
+            {tags.map((tag) => (
+              <DropdownMenuCheckboxItem
+                key={tag}
+                checked={selectedTags.includes(tag)}
+                onCheckedChange={() => toggleTag(tag)}
+              >
+                {tag}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }
