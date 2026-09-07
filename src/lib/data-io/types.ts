@@ -44,6 +44,7 @@ export const assetRowSchema = z.object({
   purchaseDate: z.string().nullable().optional(), // ISO date, yyyy-mm-dd
   purchasePrice: z.union([z.number(), z.string()]).nullable().optional(),
   purchaseCurrency: z.string().nullable().optional(),
+  isSecondHand: z.boolean().optional(),
   vendor: z.string().nullable().optional(),
   warrantyExpiresAt: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),

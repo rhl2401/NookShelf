@@ -15,6 +15,7 @@ import {
 import { DialogTriggerButton } from "@/components/dialog-trigger-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -70,6 +71,7 @@ export function AssetFormDialog({
     purchaseDate: Date | string | null;
     purchasePrice: unknown;
     purchaseCurrency: string | null;
+    isSecondHand?: boolean;
     vendor: string | null;
     warrantyExpiresAt: Date | string | null;
     customFields: unknown;
@@ -97,6 +99,7 @@ export function AssetFormDialog({
   const [purchaseCurrency, setPurchaseCurrency] = useState(
     asset?.purchaseCurrency ?? defaultCurrency,
   );
+  const [isSecondHand, setIsSecondHand] = useState(asset?.isSecondHand ?? false);
   const [vendor, setVendor] = useState(asset?.vendor ?? "");
   const [warrantyExpiresAt, setWarrantyExpiresAt] = useState(
     toDateInput(asset?.warrantyExpiresAt),
@@ -130,6 +133,7 @@ export function AssetFormDialog({
           purchaseDate: purchaseDate || undefined,
           purchasePrice: purchasePrice || undefined,
           purchaseCurrency: purchasePrice ? purchaseCurrency : undefined,
+          isSecondHand,
           vendor,
           warrantyExpiresAt: warrantyExpiresAt || undefined,
           tags,
@@ -305,6 +309,15 @@ export function AssetFormDialog({
                 value={purchaseDate}
                 onChange={(e) => setPurchaseDate(e.target.value)}
               />
+            </div>
+            <div className="flex items-end pb-1.5">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={isSecondHand}
+                  onCheckedChange={(c) => setIsSecondHand(c === true)}
+                />
+                Bought second-hand
+              </label>
             </div>
             <div className="grid gap-1.5">
               <Label>Purchase price</Label>

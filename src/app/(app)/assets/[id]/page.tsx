@@ -155,6 +155,7 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                     purchaseDate: asset.purchaseDate,
                     purchasePrice: asset.purchasePrice?.toString() ?? null,
                     purchaseCurrency: asset.purchaseCurrency,
+                    isSecondHand: asset.isSecondHand,
                     vendor: asset.vendor,
                     warrantyExpiresAt: asset.warrantyExpiresAt,
                     customFields: asset.customFields,
@@ -219,6 +220,11 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                     </span>
                   )}
                 </>
+              )}
+              {asset.isSecondHand && (
+                <Badge variant="outline" className="ml-2">
+                  Second-hand
+                </Badge>
               )}
             </Row>
             <Row label="Vendor">{asset.vendor ?? "—"}</Row>

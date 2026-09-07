@@ -254,6 +254,7 @@ model Asset {
   purchaseDate      DateTime?
   purchasePrice     Decimal?  @db.Decimal(12, 2)
   purchaseCurrency  String? // ISO 4217 code, e.g. "USD" — the currency the price was actually paid in
+  isSecondHand      Boolean   @default(false) // purchaseDate/purchasePrice already cover what/when — this just flags the source
   vendor            String?
   warrantyExpiresAt DateTime?
 

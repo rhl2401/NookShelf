@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,13 @@ type AssetRow = {
   icon: string | null;
   iconColor: string | null;
   primaryPictureId: string | null;
-  assetType: { name: string; icon: string | null; iconColor: string | null; inheritIcon: boolean };
+  assetType: {
+    name: string;
+    category: string | null;
+    icon: string | null;
+    iconColor: string | null;
+    inheritIcon: boolean;
+  };
   location: { id: string; name: string } | null;
   assignedTo: { id: string; name: string } | null;
   tags: Array<{ tag: { name: string } }>;
@@ -58,6 +65,18 @@ export function AssetsTable({
   const [pendingAssignee, setPendingAssignee] = useState<string | undefined>(undefined);
   const [bulkTagValue, setBulkTagValue] = useState("");
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentSort = searchParams.get("sort");
+  const currentDir = searchParams.get("dir") === "desc" ? "desc" : "asc";
+
+  function toggleSort(column: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    const nextDir = currentSort === column && currentDir === "asc" ? "desc" : "asc";
+    params.set("sort", column);
+    params.set("dir", nextDir);
+    router.push(`${pathname}?${params.toString()}`);
+  }
 
   const allSelected = assets.length > 0 && selected.size === assets.length;
   const hasPendingChanges =
@@ -205,12 +224,27 @@ export function AssetsTable({
                   <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
                 </TableHead>
               )}
-              <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Assigned to</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Tags</TableHead>
+              <SortableHead column="name" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
+                Name
+              </SortableHead>
+              <SortableHead column="type" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
+                Type
+              </SortableHead>
+              <SortableHead column="category" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
+                Category
+              </SortableHead>
+              <SortableHead column="location" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
+                Location
+              </SortableHead>
+              <SortableHead column="assignedTo" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
+                Assigned to
+              </SortableHead>
+              <SortableHead column="status" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
+                Status
+              </SortableHead>
+              <SortableHead column="tags" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
+                Tags
+              </SortableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -245,6 +279,7 @@ export function AssetsTable({
                   </Link>
                 </TableCell>
                 <TableCell>{asset.assetType.name}</TableCell>
+                <TableCell>{asset.assetType.category ?? "—"}</TableCell>
                 <TableCell>{asset.location?.name ?? "—"}</TableCell>
                 <TableCell>{asset.assignedTo?.name ?? "—"}</TableCell>
                 <TableCell>
@@ -265,7 +300,7 @@ export function AssetsTable({
             ))}
             {assets.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                   No assets match these filters.
                 </TableCell>
               </TableRow>
@@ -274,5 +309,41 @@ export function AssetsTable({
         </Table>
       </div>
     </div>
+  );
+}
+
+function SortableHead({
+  column,
+  currentSort,
+  currentDir,
+  onSort,
+  children,
+}: {
+  column: string;
+  currentSort: string | null;
+  currentDir: "asc" | "desc";
+  onSort: (column: string) => void;
+  children: React.ReactNode;
+}) {
+  const isActive = currentSort === column;
+  return (
+    <TableHead>
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className="flex items-center gap-1 whitespace-nowrap hover:text-foreground"
+      >
+        {children}
+        {isActive ? (
+          currentDir === "asc" ? (
+            <ArrowUp className="size-3" />
+          ) : (
+            <ArrowDown className="size-3" />
+          )
+        ) : (
+          <ArrowUpDown className="size-3 text-muted-foreground/40" />
+        )}
+      </button>
+    </TableHead>
   );
 }

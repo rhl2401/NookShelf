@@ -8,6 +8,18 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.12.0
+
+- Assets can now be marked "Bought second-hand" (a simple checkbox next to Purchase date) —
+  reuses the existing purchase date/price fields rather than adding a second set, since for a
+  second-hand item that's still exactly what you paid and when, just from a previous owner.
+  Shows as a badge on the asset's detail page. Included in the data import/export bundle.
+- The Assets list is now sortable — click any column header (including a new "Category" column,
+  showing the asset type's category) to sort by it, click again to reverse. Tags sort
+  alphabetically by each asset's first tag; untagged assets sort last either way.
+- Schema change: adds `Asset.isSecondHand` (defaults to `false`). Applied automatically via
+  `prisma migrate deploy` — no manual steps.
+
 ## 1.11.1
 
 - Fixes blurry pictures/avatars when the uploaded image is smaller than the configured picture

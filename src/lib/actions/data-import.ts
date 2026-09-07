@@ -145,6 +145,7 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportSummary>
           purchaseDate: row.purchaseDate ? new Date(row.purchaseDate) : null,
           purchasePrice: row.purchasePrice != null ? String(row.purchasePrice) : null,
           purchaseCurrency: row.purchaseCurrency || null,
+          isSecondHand: row.isSecondHand ?? false,
           vendor: row.vendor || null,
           warrantyExpiresAt: row.warrantyExpiresAt ? new Date(row.warrantyExpiresAt) : null,
           customFields: (row.customFields ?? {}) as Prisma.InputJsonValue,
