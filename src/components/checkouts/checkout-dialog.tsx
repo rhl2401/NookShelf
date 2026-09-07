@@ -43,6 +43,15 @@ export function CheckoutDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setBorrowerId("");
+      setDueAt(format(addDays(new Date(), 7), "yyyy-MM-dd"));
+      setNotes("");
+    }
+  }
+
   function submit() {
     startTransition(async () => {
       try {
@@ -52,7 +61,7 @@ export function CheckoutDialog({
           await checkoutKit(target.id, { borrowerId, dueAt, notes });
         }
         toast.success(`Checked out ${target.label}`);
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Couldn't check out");
@@ -61,7 +70,7 @@ export function CheckoutDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton
         trigger={
           trigger ?? (
@@ -104,7 +113,7 @@ export function CheckoutDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !borrowerId || !dueAt}>

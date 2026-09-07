@@ -77,6 +77,20 @@ export function AssetTypeFormDialog({
     setFields([]);
   }
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setName(assetType?.name ?? "");
+      setCategory(assetType?.category ?? "");
+      setIcon(assetType?.icon ?? null);
+      setIconColor(assetType?.iconColor ?? null);
+      setInheritIcon(assetType?.inheritIcon ?? true);
+      setPictureId(assetType?.primaryPictureId ?? null);
+      setFields((assetType?.fieldSchema as AssetFieldDef[] | undefined) ?? []);
+      setTemplateName(null);
+    }
+  }
+
   function submit() {
     startTransition(async () => {
       try {
@@ -103,7 +117,7 @@ export function AssetTypeFormDialog({
           });
         }
         toast.success(assetType?.id ? "Asset type updated" : "Asset type created");
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -112,7 +126,7 @@ export function AssetTypeFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton trigger={trigger} />
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
@@ -211,7 +225,7 @@ export function AssetTypeFormDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !name}>

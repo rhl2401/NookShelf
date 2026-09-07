@@ -119,6 +119,36 @@ export function AssetFormDialog({
     [assetTypes, assetTypeId],
   );
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setName(asset?.name ?? "");
+      setAssetTypeId(
+        asset?.assetTypeId ??
+          defaultAssetTypeId ??
+          assetTypes.find((t) => t.name === "Generic")?.id ??
+          assetTypes[0]?.id ??
+          "",
+      );
+      setLocationId(asset?.locationId ?? "none");
+      setAssignedToId(asset?.assignedToId ?? "none");
+      setParentAssetId(asset?.parentAssetId ?? "none");
+      setStatus(asset?.status ?? "IN_STORAGE");
+      setNotes(asset?.notes ?? "");
+      setPurchaseDate(toDateInput(asset?.purchaseDate));
+      setPurchasePrice(asset?.purchasePrice != null ? String(asset.purchasePrice) : "");
+      setPurchaseCurrency(asset?.purchaseCurrency ?? defaultCurrency);
+      setIsSecondHand(asset?.isSecondHand ?? false);
+      setVendor(asset?.vendor ?? "");
+      setWarrantyExpiresAt(toDateInput(asset?.warrantyExpiresAt));
+      setTags(asset?.tags ?? []);
+      setCustomFields((asset?.customFields as CustomFieldValues) ?? {});
+      setIcon(null);
+      setIconColor(null);
+      setPictureId(null);
+    }
+  }
+
   function submit() {
     startTransition(async () => {
       try {
@@ -145,7 +175,7 @@ export function AssetFormDialog({
           await createAsset({ ...input, icon, iconColor, primaryPictureId: pictureId });
         }
         toast.success(asset?.id ? "Asset updated" : "Asset created");
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -154,7 +184,7 @@ export function AssetFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton trigger={trigger} />
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
@@ -381,7 +411,7 @@ export function AssetFormDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !name || !assetTypeId}>

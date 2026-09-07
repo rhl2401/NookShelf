@@ -63,6 +63,22 @@ export function ConsumableFormDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setName(consumable?.name ?? "");
+      setCategory(consumable?.category ?? "");
+      setIcon(consumable?.icon ?? null);
+      setIconColor(consumable?.iconColor ?? null);
+      setPictureId(consumable?.primaryPictureId ?? null);
+      setQuantity(String(consumable?.quantity ?? 0));
+      setLowStockThreshold(
+        consumable?.lowStockThreshold != null ? String(consumable.lowStockThreshold) : "",
+      );
+      setLocationId(consumable?.locationId ?? "none");
+    }
+  }
+
   function submit() {
     startTransition(async () => {
       try {
@@ -83,7 +99,7 @@ export function ConsumableFormDialog({
           await createConsumable(input);
         }
         toast.success(consumable?.id ? "Consumable updated" : "Consumable created");
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -92,7 +108,7 @@ export function ConsumableFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton trigger={trigger} />
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -187,7 +203,7 @@ export function ConsumableFormDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !name}>

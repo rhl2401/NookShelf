@@ -34,12 +34,17 @@ export function EditPersonDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setName(personName);
+  }
+
   function submit() {
     startTransition(async () => {
       try {
         await updatePersonName(personId, name);
         toast.success("Person updated");
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Couldn't update person");
@@ -48,13 +53,7 @@ export function EditPersonDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (next) setName(personName);
-      }}
-    >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton trigger={<Button variant="outline">Edit</Button>} />
       <DialogContent>
         <DialogHeader>
@@ -77,7 +76,7 @@ export function EditPersonDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !name.trim()}>
