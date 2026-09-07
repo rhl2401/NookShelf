@@ -21,6 +21,8 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
   const typeFilter = typeof sp.type === "string" ? sp.type : undefined;
   const locationFilter = typeof sp.location === "string" ? sp.location : undefined;
   const statusFilter = typeof sp.status === "string" ? sp.status : undefined;
+  const sortColumn = typeof sp.sort === "string" ? sp.sort : undefined;
+  const sortDir: "asc" | "desc" = sp.dir === "desc" ? "desc" : "asc";
 
   const where: Prisma.AssetWhereInput = {};
   if (q) {
@@ -37,6 +39,26 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
     where.locationId = { in: ids };
   }
 
+  // Tags are multi-valued (many-to-many), so Prisma can't order by them
+  // directly — fetch a generously large window and sort by each asset's
+  // alphabetically-first tag in JS instead, then slice to the display cap.
+  const isTagSort = sortColumn === "tags";
+  const orderBy: Prisma.AssetOrderByWithRelationInput = isTagSort
+    ? { createdAt: "desc" }
+    : sortColumn === "name"
+      ? { name: sortDir }
+      : sortColumn === "type"
+        ? { assetType: { name: sortDir } }
+        : sortColumn === "category"
+          ? { assetType: { category: sortDir } }
+          : sortColumn === "location"
+            ? { location: { name: sortDir } }
+            : sortColumn === "assignedTo"
+              ? { assignedTo: { name: sortDir } }
+              : sortColumn === "status"
+                ? { status: sortDir }
+                : { createdAt: "desc" };
+
   const [assets, assetTypes, tree, people, myPictures, workspacePictures] = await Promise.all([
     prisma.asset.findMany({
       where,
@@ -46,8 +68,8 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
         assignedTo: true,
         tags: { include: { tag: true } },
       },
-      orderBy: { createdAt: "desc" },
-      take: 200,
+      orderBy,
+      take: isTagSort ? 5000 : 200,
     }),
     prisma.assetType.findMany({ orderBy: { name: "asc" } }),
     buildLocationTree(),
@@ -70,9 +92,24 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
 
   const flatLocations = flattenLocationTree(tree);
   const assetOptions = assets.map((a) => ({ id: a.id, name: a.name, assetTag: a.assetTag }));
+
+  const sortedAssets = isTagSort
+    ? [...assets]
+        .sort((a, b) => {
+          const aKey = a.tags.map((t) => t.tag.name).sort()[0] ?? null;
+          const bKey = b.tags.map((t) => t.tag.name).sort()[0] ?? null;
+          if (aKey === null && bKey === null) return 0;
+          if (aKey === null) return 1;
+          if (bKey === null) return -1;
+          const cmp = aKey.localeCompare(bKey);
+          return sortDir === "desc" ? -cmp : cmp;
+        })
+        .slice(0, 200)
+    : assets;
+
   // Prisma's Decimal (purchasePrice) can't cross the server/client boundary —
   // the table doesn't display it, so just leave it out of what's passed down.
-  const tableAssets = assets.map((a) => ({
+  const tableAssets = sortedAssets.map((a) => ({
     id: a.id,
     assetTag: a.assetTag,
     name: a.name,
@@ -91,7 +128,7 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Assets</h1>
-          <p className="text-sm text-muted-foreground">{assets.length} shown</p>
+          <p className="text-sm text-muted-foreground">{tableAssets.length} shown</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" nativeButton={false} render={<a href="/api/assets/export" />}>
