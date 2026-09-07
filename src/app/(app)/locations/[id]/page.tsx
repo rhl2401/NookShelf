@@ -9,12 +9,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LocationFormDialog } from "@/components/locations/location-form-dialog";
 import { DeleteLocationDialog } from "@/components/locations/delete-location-dialog";
+import { HideCheckedOutToggle } from "@/components/locations/hide-checked-out-toggle";
 import { AssetPicture } from "@/components/asset-picture";
+import { assetStatusBadgeVariant, assetStatusLabel } from "@/lib/asset-status";
 
 export default async function LocationDetailPage({
   params,
+  searchParams,
 }: PageProps<"/locations/[id]">) {
   const { id } = await params;
+  const sp = await searchParams;
+  const hideCheckedOut = (typeof sp.hideCheckedOut === "string" ? sp.hideCheckedOut : undefined) === "1";
   const session = await auth();
   const canManage = Boolean(session?.user.permissions.includes("location:manage"));
 
@@ -47,6 +52,9 @@ export default async function LocationDetailPage({
     }),
   ]);
   const flatLocations = flattenLocationTree(tree);
+  const visibleAssets = hideCheckedOut
+    ? location.assets.filter((a) => a.status !== "CHECKED_OUT")
+    : location.assets;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -131,11 +139,12 @@ export default async function LocationDetailPage({
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Assets here ({location.assets.length})</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base">Assets here ({visibleAssets.length})</CardTitle>
+          <HideCheckedOutToggle />
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          {location.assets.map((asset) => (
+          {visibleAssets.map((asset) => (
             <Link
               key={asset.id}
               href={`/assets/${asset.id}`}
@@ -144,12 +153,19 @@ export default async function LocationDetailPage({
               <span className="font-medium">{asset.name}</span>
               <span className="flex items-center gap-2 text-muted-foreground">
                 <Badge variant="outline">{asset.assetType.name}</Badge>
+                {asset.status === "CHECKED_OUT" && (
+                  <Badge variant={assetStatusBadgeVariant(asset.status)}>
+                    {assetStatusLabel(asset.status)}
+                  </Badge>
+                )}
                 {asset.assetTag}
               </span>
             </Link>
           ))}
-          {location.assets.length === 0 && (
-            <p className="text-sm text-muted-foreground">No assets here yet.</p>
+          {visibleAssets.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              {location.assets.length === 0 ? "No assets here yet." : "No assets match this filter."}
+            </p>
           )}
         </CardContent>
       </Card>
