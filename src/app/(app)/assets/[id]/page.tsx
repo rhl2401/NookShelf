@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { buildLocationTree, flattenLocationTree } from "@/lib/locations";
+import { buildLocationTree, flattenLocationTree, buildAncestryChains } from "@/lib/locations";
+import { LocationBreadcrumb } from "@/components/locations/location-breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
     }),
   ]);
   const flatLocations = flattenLocationTree(tree);
+  const locationAncestry = buildAncestryChains(tree);
   const fieldSchema = (asset.assetType.fieldSchema as AssetFieldDef[]) ?? [];
   const customFields = (asset.customFields as Record<string, unknown>) ?? {};
 
@@ -190,7 +192,7 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
             <Row label="Location">
               {asset.location ? (
                 <Link href={`/locations/${asset.location.id}`} className="hover:underline">
-                  {asset.location.name}
+                  <LocationBreadcrumb chain={locationAncestry[asset.location.id] ?? [asset.location.name]} />
                 </Link>
               ) : (
                 "—"

@@ -1,7 +1,12 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { buildLocationTree, flattenLocationTree, getDescendantLocationIds } from "@/lib/locations";
+import {
+  buildLocationTree,
+  flattenLocationTree,
+  getDescendantLocationIds,
+  buildAncestryChains,
+} from "@/lib/locations";
 import { Button } from "@/components/ui/button";
 import { AssetsFilterBar } from "@/components/assets/assets-filter-bar";
 import { AssetsTable } from "@/components/assets/assets-table";
@@ -97,6 +102,7 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
     ]);
 
   const flatLocations = flattenLocationTree(tree);
+  const locationAncestry = buildAncestryChains(tree);
   const assetOptions = assets.map((a) => ({ id: a.id, name: a.name, assetTag: a.assetTag }));
 
   const sortedAssets = isTagSort
@@ -169,6 +175,7 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
       <AssetsTable
         assets={tableAssets}
         flatLocations={flatLocations}
+        locationAncestry={locationAncestry}
         people={people}
         canManage={canManage}
       />
