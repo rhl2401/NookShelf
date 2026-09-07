@@ -41,6 +41,7 @@ export const assetRowSchema = z.object({
     .enum(["IN_USE", "IN_STORAGE", "CHECKED_OUT", "RETIRED", "LOST", "DISPOSED"])
     .optional(),
   notes: z.string().nullable().optional(),
+  inUseLocationNote: z.string().nullable().optional(),
   purchaseDate: z.string().nullable().optional(), // ISO date, yyyy-mm-dd
   purchasePrice: z.union([z.number(), z.string()]).nullable().optional(),
   purchaseCurrency: z.string().nullable().optional(),

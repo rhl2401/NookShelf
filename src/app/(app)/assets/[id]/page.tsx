@@ -152,6 +152,7 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                     parentAssetId: asset.parentAssetId,
                     status: asset.status,
                     notes: asset.notes,
+                    inUseLocationNote: asset.inUseLocationNote,
                     purchaseDate: asset.purchaseDate,
                     purchasePrice: asset.purchasePrice?.toString() ?? null,
                     purchaseCurrency: asset.purchaseCurrency,
@@ -182,6 +183,9 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
               <Badge variant={assetStatusBadgeVariant(asset.status)}>
                 {assetStatusLabel(asset.status)}
               </Badge>
+              {asset.status === "IN_USE" && asset.inUseLocationNote && (
+                <span className="ml-2 text-muted-foreground">{asset.inUseLocationNote}</span>
+              )}
             </Row>
             <Row label="Location">
               {asset.location ? (

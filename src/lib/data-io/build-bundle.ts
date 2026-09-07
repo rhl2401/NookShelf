@@ -68,6 +68,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
       parentAssetTag: a.parentAsset?.assetTag ?? null,
       status: a.status,
       notes: a.notes,
+      inUseLocationNote: a.inUseLocationNote,
       purchaseDate: a.purchaseDate ? a.purchaseDate.toISOString().slice(0, 10) : null,
       purchasePrice: a.purchasePrice?.toString() ?? null,
       purchaseCurrency: a.purchaseCurrency,

@@ -234,6 +234,7 @@ model Asset {
   name        String
   status      AssetStatus @default(IN_STORAGE)
   notes       String?
+  inUseLocationNote String? // free-text whereabouts while status is IN_USE, e.g. "Rasmus's desk" — separate from the formal Location, which is where it's normally stored
 
   assetTypeId String
   assetType   AssetType @relation(fields: [assetTypeId], references: [id], onDelete: Restrict)

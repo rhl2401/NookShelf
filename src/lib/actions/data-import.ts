@@ -142,6 +142,7 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportSummary>
           assignedToId,
           status: (row.status || "IN_STORAGE") as AssetStatus,
           notes: row.notes || null,
+          inUseLocationNote: row.status === "IN_USE" ? row.inUseLocationNote || null : null,
           purchaseDate: row.purchaseDate ? new Date(row.purchaseDate) : null,
           purchasePrice: row.purchasePrice != null ? String(row.purchasePrice) : null,
           purchaseCurrency: row.purchaseCurrency || null,

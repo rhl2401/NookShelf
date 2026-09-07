@@ -68,6 +68,7 @@ export function AssetFormDialog({
     parentAssetId: string | null;
     status: string;
     notes: string | null;
+    inUseLocationNote?: string | null;
     purchaseDate: Date | string | null;
     purchasePrice: unknown;
     purchaseCurrency: string | null;
@@ -92,6 +93,7 @@ export function AssetFormDialog({
   const [parentAssetId, setParentAssetId] = useState(asset?.parentAssetId ?? "none");
   const [status, setStatus] = useState(asset?.status ?? "IN_STORAGE");
   const [notes, setNotes] = useState(asset?.notes ?? "");
+  const [inUseLocationNote, setInUseLocationNote] = useState(asset?.inUseLocationNote ?? "");
   const [purchaseDate, setPurchaseDate] = useState(toDateInput(asset?.purchaseDate));
   const [purchasePrice, setPurchasePrice] = useState(
     asset?.purchasePrice != null ? String(asset.purchasePrice) : "",
@@ -135,6 +137,7 @@ export function AssetFormDialog({
       setParentAssetId(asset?.parentAssetId ?? "none");
       setStatus(asset?.status ?? "IN_STORAGE");
       setNotes(asset?.notes ?? "");
+      setInUseLocationNote(asset?.inUseLocationNote ?? "");
       setPurchaseDate(toDateInput(asset?.purchaseDate));
       setPurchasePrice(asset?.purchasePrice != null ? String(asset.purchasePrice) : "");
       setPurchaseCurrency(asset?.purchaseCurrency ?? defaultCurrency);
@@ -160,6 +163,7 @@ export function AssetFormDialog({
           parentAssetId: parentAssetId === "none" ? null : parentAssetId,
           status: status as (typeof ASSET_STATUSES)[number]["value"],
           notes,
+          inUseLocationNote: status === "IN_USE" ? inUseLocationNote : undefined,
           purchaseDate: purchaseDate || undefined,
           purchasePrice: purchasePrice || undefined,
           purchaseCurrency: purchasePrice ? purchaseCurrency : undefined,
@@ -256,6 +260,17 @@ export function AssetFormDialog({
                 </SelectContent>
               </Select>
             </div>
+
+            {status === "IN_USE" && (
+              <div className="col-span-2 grid gap-1.5">
+                <Label>Where is it?</Label>
+                <Input
+                  value={inUseLocationNote}
+                  onChange={(e) => setInUseLocationNote(e.target.value)}
+                  placeholder="e.g. Rasmus's desk"
+                />
+              </div>
+            )}
 
             <div className="grid gap-1.5">
               <Label>Location</Label>
