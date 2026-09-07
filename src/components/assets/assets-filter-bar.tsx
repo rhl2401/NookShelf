@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,17 @@ export function AssetsFilterBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedTags = searchParams.getAll("tags");
+  // Controlled (not defaultValue) so "Remove filters" can clear the visible
+  // text immediately — a defaultValue-based input only reads the URL once,
+  // on mount, so pushing a new URL alone wouldn't visually clear it.
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
+
+  const hasActiveFilters =
+    Boolean(searchParams.get("q")) ||
+    Boolean(searchParams.get("type")) ||
+    Boolean(searchParams.get("location")) ||
+    Boolean(searchParams.get("status")) ||
+    selectedTags.length > 0;
 
   function setParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -50,13 +62,23 @@ export function AssetsFilterBar({
     router.push(`${pathname}?${params.toString()}`);
   }
 
+  function clearFilters() {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const key of ["q", "type", "location", "status", "tags"]) params.delete(key);
+    router.push(params.toString() ? `${pathname}?${params.toString()}` : pathname);
+    setQuery("");
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Input
         placeholder="Search assets…"
-        defaultValue={searchParams.get("q") ?? ""}
+        value={query}
         className="w-56"
-        onChange={(e) => setParam("q", e.target.value)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setParam("q", e.target.value);
+        }}
       />
       <Select
         value={searchParams.get("type") ?? "all"}
@@ -142,6 +164,11 @@ export function AssetsFilterBar({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+      )}
+      {hasActiveFilters && (
+        <Button variant="ghost" size="sm" onClick={clearFilters}>
+          <X className="size-3.5" /> Remove filters
+        </Button>
       )}
     </div>
   );
