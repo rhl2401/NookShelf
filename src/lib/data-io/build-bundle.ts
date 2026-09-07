@@ -71,6 +71,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
       purchaseDate: a.purchaseDate ? a.purchaseDate.toISOString().slice(0, 10) : null,
       purchasePrice: a.purchasePrice?.toString() ?? null,
       purchaseCurrency: a.purchaseCurrency,
+      isSecondHand: a.isSecondHand,
       vendor: a.vendor,
       warrantyExpiresAt: a.warrantyExpiresAt ? a.warrantyExpiresAt.toISOString().slice(0, 10) : null,
       tags: a.tags.map((t) => t.tag.name),

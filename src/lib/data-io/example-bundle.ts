@@ -57,6 +57,7 @@ export const EXAMPLE_BUNDLE: ExportBundle = {
       purchaseDate: "2024-06-01",
       purchasePrice: "12.50",
       purchaseCurrency: "EUR",
+      isSecondHand: true,
       vendor: null,
       warrantyExpiresAt: null,
       tags: ["usb-c", "hdmi"],
