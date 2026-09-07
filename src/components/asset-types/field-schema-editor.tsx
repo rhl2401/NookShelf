@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -105,18 +106,10 @@ export function FieldSchemaEditor({
             </label>
 
             {(field.type === "SELECT" || field.type === "MULTISELECT") && (
-              <Input
-                placeholder="Options, comma separated"
-                className="min-w-56 flex-1"
-                value={(field.options ?? []).join(", ")}
-                onChange={(e) =>
-                  update(index, {
-                    options: e.target.value
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
-                  })
-                }
+              <OptionsInput
+                key={field.key || index}
+                options={field.options ?? []}
+                onChange={(options) => update(index, { options })}
               />
             )}
 
@@ -136,5 +129,37 @@ export function FieldSchemaEditor({
         <Plus /> Add field
       </Button>
     </div>
+  );
+}
+
+// Kept as raw draft text, separate from the parsed `options` array — deriving
+// the input's value from the array meant a trailing comma or space (about to
+// start a new option) was immediately stripped by the split/trim/filter
+// round-trip, so those keys visually appeared to do nothing.
+function OptionsInput({
+  options,
+  onChange,
+}: {
+  options: string[];
+  onChange: (options: string[]) => void;
+}) {
+  const [text, setText] = useState(options.join(", "));
+
+  return (
+    <Input
+      placeholder="Options, comma separated"
+      className="min-w-56 flex-1"
+      value={text}
+      onChange={(e) => {
+        const next = e.target.value;
+        setText(next);
+        onChange(
+          next
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        );
+      }}
+    />
   );
 }
