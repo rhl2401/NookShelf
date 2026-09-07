@@ -52,6 +52,18 @@ export function KitFormDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setName(kit?.name ?? "");
+      setDescription(kit?.description ?? "");
+      setIcon(kit?.icon ?? null);
+      setIconColor(kit?.iconColor ?? null);
+      setPictureId(kit?.primaryPictureId ?? null);
+      setSelected(new Set(kit?.assetIds ?? []));
+    }
+  }
+
   function submit() {
     startTransition(async () => {
       try {
@@ -69,7 +81,7 @@ export function KitFormDialog({
           await createKit(input);
         }
         toast.success(kit?.id ? "Kit updated" : "Kit created");
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -78,7 +90,7 @@ export function KitFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton trigger={trigger} />
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -121,7 +133,7 @@ export function KitFormDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !name}>

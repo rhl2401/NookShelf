@@ -37,15 +37,21 @@ export function MergePeopleDialog({ people }: { people: PersonOption[] }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setSourceId("");
+      setTargetId("");
+    }
+  }
+
   function submit() {
     if (!sourceId || !targetId) return;
     startTransition(async () => {
       try {
         await mergePersons(sourceId, targetId);
         toast.success("People merged");
-        setOpen(false);
-        setSourceId("");
-        setTargetId("");
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Couldn't merge people");
@@ -54,7 +60,7 @@ export function MergePeopleDialog({ people }: { people: PersonOption[] }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton
         trigger={
           <Button variant="outline">
@@ -113,7 +119,7 @@ export function MergePeopleDialog({ people }: { people: PersonOption[] }) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !sourceId || !targetId}>

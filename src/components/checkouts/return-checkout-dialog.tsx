@@ -36,6 +36,13 @@ export function ReturnCheckoutDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setState(items.map((i) => ({ ...i, isMissing: false, isDamaged: false, conditionNote: "" })));
+    }
+  }
+
   function update(assetId: string, patch: Partial<ItemState>) {
     setState((prev) => prev.map((i) => (i.assetId === assetId ? { ...i, ...patch } : i)));
   }
@@ -52,7 +59,7 @@ export function ReturnCheckoutDialog({
           })),
         });
         toast.success(`Checked in ${label}`);
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Couldn't check in");
@@ -61,7 +68,7 @@ export function ReturnCheckoutDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton
         trigger={
           <Button size="sm" variant="outline">
@@ -105,7 +112,7 @@ export function ReturnCheckoutDialog({
           ))}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending}>

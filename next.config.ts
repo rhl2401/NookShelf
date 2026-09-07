@@ -16,6 +16,14 @@ const cspHeader = `
 `;
 
 const nextConfig: NextConfig = {
+  // Default Server Actions body limit is 1MB — too small for attachment
+  // uploads (uploadAttachment enforces its own 20MB cap; give it headroom
+  // for multipart/FormData overhead).
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "25mb",
+    },
+  },
   async headers() {
     return [
       {

@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/auth-helpers";
 import { processPictureUpload } from "@/lib/image-processing";
 import { savePictureFile, deleteStoredFile } from "@/lib/storage";
 import { getWorkspacePictureSize } from "@/lib/actions/workspace-settings";
+import { fetchRemoteImage, guessNameFromUrl } from "@/lib/fetch-remote-image";
 
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
@@ -30,6 +31,40 @@ export async function uploadPicture(formData: FormData, scope: "PERSONAL" | "WOR
   const picture = await prisma.picture.create({
     data: {
       name: defaultName,
+      scope,
+      ownerId: session.user.personId,
+      path: relativePath,
+      sizeBytes: main.buffer.byteLength,
+      width: main.width,
+      height: main.height,
+      thumbPath: thumbRelativePath,
+      thumbSizeBytes: thumb.buffer.byteLength,
+    },
+  });
+
+  revalidatePath("/pictures");
+  return picture;
+}
+
+export async function uploadPictureFromUrl(
+  url: string,
+  scope: "PERSONAL" | "WORKSPACE" = "PERSONAL",
+) {
+  const session = await requirePermission("asset:manage");
+  if (scope === "WORKSPACE") await requirePermission("picture:share");
+
+  const input = await fetchRemoteImage(url);
+
+  const size = await getWorkspacePictureSize();
+  const { main, thumb } = await processPictureUpload(input, size);
+  const [relativePath, thumbRelativePath] = await Promise.all([
+    savePictureFile(main.buffer),
+    savePictureFile(thumb.buffer),
+  ]);
+
+  const picture = await prisma.picture.create({
+    data: {
+      name: guessNameFromUrl(url),
       scope,
       ownerId: session.user.personId,
       path: relativePath,

@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { addDays, addMonths, addYears, format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,12 +27,22 @@ import {
 } from "@/components/ui/select";
 import { CustomFieldsForm, type CustomFieldValues } from "@/components/assets/custom-fields-form";
 import { TagsInput } from "@/components/ui-custom/tags-input";
+import { SuggestInput } from "@/components/ui-custom/suggest-input";
 import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
 import type { PictureRef } from "@/components/pictures/picture-row";
 import { createAsset, updateAsset } from "@/lib/actions/assets";
 import type { AssetFieldDef } from "@/lib/asset-fields";
 import { ASSET_STATUSES } from "@/lib/asset-status";
 import { CURRENCIES } from "@/lib/currency-shared";
+
+const WARRANTY_PRESETS: Array<{ label: string; addToDate: (d: Date) => Date }> = [
+  { label: "30 days", addToDate: (d) => addDays(d, 30) },
+  { label: "1 month", addToDate: (d) => addMonths(d, 1) },
+  { label: "6 months", addToDate: (d) => addMonths(d, 6) },
+  { label: "1 year", addToDate: (d) => addYears(d, 1) },
+  { label: "2 years", addToDate: (d) => addYears(d, 2) },
+  { label: "3 years", addToDate: (d) => addYears(d, 3) },
+];
 
 type AssetTypeOption = { id: string; name: string; fieldSchema: unknown };
 type LocationOption = { id: string; label: string };
@@ -49,6 +60,8 @@ export function AssetFormDialog({
   defaultCurrency = "USD",
   myPictures = [],
   workspacePictures = [],
+  tagSuggestions = [],
+  vendorSuggestions = [],
 }: {
   trigger: React.ReactElement;
   assetTypes: AssetTypeOption[];
@@ -59,6 +72,8 @@ export function AssetFormDialog({
   defaultCurrency?: string;
   myPictures?: PictureRef[];
   workspacePictures?: PictureRef[];
+  tagSuggestions?: string[];
+  vendorSuggestions?: string[];
   asset?: {
     id: string;
     name: string;
@@ -68,6 +83,7 @@ export function AssetFormDialog({
     parentAssetId: string | null;
     status: string;
     notes: string | null;
+    inUseLocationNote?: string | null;
     purchaseDate: Date | string | null;
     purchasePrice: unknown;
     purchaseCurrency: string | null;
@@ -92,6 +108,7 @@ export function AssetFormDialog({
   const [parentAssetId, setParentAssetId] = useState(asset?.parentAssetId ?? "none");
   const [status, setStatus] = useState(asset?.status ?? "IN_STORAGE");
   const [notes, setNotes] = useState(asset?.notes ?? "");
+  const [inUseLocationNote, setInUseLocationNote] = useState(asset?.inUseLocationNote ?? "");
   const [purchaseDate, setPurchaseDate] = useState(toDateInput(asset?.purchaseDate));
   const [purchasePrice, setPurchasePrice] = useState(
     asset?.purchasePrice != null ? String(asset.purchasePrice) : "",
@@ -119,6 +136,37 @@ export function AssetFormDialog({
     [assetTypes, assetTypeId],
   );
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setName(asset?.name ?? "");
+      setAssetTypeId(
+        asset?.assetTypeId ??
+          defaultAssetTypeId ??
+          assetTypes.find((t) => t.name === "Generic")?.id ??
+          assetTypes[0]?.id ??
+          "",
+      );
+      setLocationId(asset?.locationId ?? "none");
+      setAssignedToId(asset?.assignedToId ?? "none");
+      setParentAssetId(asset?.parentAssetId ?? "none");
+      setStatus(asset?.status ?? "IN_STORAGE");
+      setNotes(asset?.notes ?? "");
+      setInUseLocationNote(asset?.inUseLocationNote ?? "");
+      setPurchaseDate(toDateInput(asset?.purchaseDate));
+      setPurchasePrice(asset?.purchasePrice != null ? String(asset.purchasePrice) : "");
+      setPurchaseCurrency(asset?.purchaseCurrency ?? defaultCurrency);
+      setIsSecondHand(asset?.isSecondHand ?? false);
+      setVendor(asset?.vendor ?? "");
+      setWarrantyExpiresAt(toDateInput(asset?.warrantyExpiresAt));
+      setTags(asset?.tags ?? []);
+      setCustomFields((asset?.customFields as CustomFieldValues) ?? {});
+      setIcon(null);
+      setIconColor(null);
+      setPictureId(null);
+    }
+  }
+
   function submit() {
     startTransition(async () => {
       try {
@@ -130,6 +178,7 @@ export function AssetFormDialog({
           parentAssetId: parentAssetId === "none" ? null : parentAssetId,
           status: status as (typeof ASSET_STATUSES)[number]["value"],
           notes,
+          inUseLocationNote: status === "IN_USE" ? inUseLocationNote : undefined,
           purchaseDate: purchaseDate || undefined,
           purchasePrice: purchasePrice || undefined,
           purchaseCurrency: purchasePrice ? purchaseCurrency : undefined,
@@ -145,7 +194,7 @@ export function AssetFormDialog({
           await createAsset({ ...input, icon, iconColor, primaryPictureId: pictureId });
         }
         toast.success(asset?.id ? "Asset updated" : "Asset created");
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -154,7 +203,7 @@ export function AssetFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton trigger={trigger} />
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
@@ -226,6 +275,17 @@ export function AssetFormDialog({
                 </SelectContent>
               </Select>
             </div>
+
+            {status === "IN_USE" && (
+              <div className="col-span-2 grid gap-1.5">
+                <Label>Where is it?</Label>
+                <Input
+                  value={inUseLocationNote}
+                  onChange={(e) => setInUseLocationNote(e.target.value)}
+                  placeholder="e.g. Rasmus's desk"
+                />
+              </div>
+            )}
 
             <div className="grid gap-1.5">
               <Label>Location</Label>
@@ -344,7 +404,7 @@ export function AssetFormDialog({
             </div>
             <div className="grid gap-1.5">
               <Label>Vendor</Label>
-              <Input value={vendor} onChange={(e) => setVendor(e.target.value)} />
+              <SuggestInput value={vendor} onChange={setVendor} suggestions={vendorSuggestions} />
             </div>
             <div className="grid gap-1.5">
               <Label>Warranty expires</Label>
@@ -353,11 +413,34 @@ export function AssetFormDialog({
                 value={warrantyExpiresAt}
                 onChange={(e) => setWarrantyExpiresAt(e.target.value)}
               />
+              <div className="flex flex-wrap gap-1">
+                {WARRANTY_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    disabled={!purchaseDate}
+                    onClick={() =>
+                      setWarrantyExpiresAt(
+                        format(preset.addToDate(parseISO(purchaseDate)), "yyyy-MM-dd"),
+                      )
+                    }
+                    className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+                    title={purchaseDate ? undefined : "Set a purchase date first"}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="col-span-2 grid gap-1.5">
               <Label>Tags</Label>
-              <TagsInput value={tags} onChange={setTags} placeholder="Type a tag, then comma or enter" />
+              <TagsInput
+                value={tags}
+                onChange={setTags}
+                placeholder="Type a tag, then comma or enter"
+                suggestions={tagSuggestions}
+              />
             </div>
 
             <div className="col-span-2 grid gap-1.5">
@@ -381,7 +464,7 @@ export function AssetFormDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !name || !assetTypeId}>

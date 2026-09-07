@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Paperclip, Trash2, Upload } from "lucide-react";
-import { uploadAttachment, deleteAttachment } from "@/lib/actions/assets";
+import { Input } from "@/components/ui/input";
+import { Paperclip, Pencil, Trash2, Upload } from "lucide-react";
+import { uploadAttachment, deleteAttachment, renameAttachment } from "@/lib/actions/assets";
 
 type AttachmentDto = {
   id: string;
@@ -26,6 +27,8 @@ export function AttachmentsPanel({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
   const router = useRouter();
 
   function upload() {
@@ -57,26 +60,70 @@ export function AttachmentsPanel({
     });
   }
 
+  function startEditing(a: AttachmentDto) {
+    setEditingId(a.id);
+    setDraft(a.originalName);
+  }
+
+  function commitRename(id: string, originalName: string) {
+    const trimmed = draft.trim();
+    setEditingId(null);
+    if (!trimmed || trimmed === originalName) return;
+    startTransition(async () => {
+      try {
+        await renameAttachment(id, trimmed);
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Couldn't rename");
+      }
+    });
+  }
+
   return (
     <div className="flex flex-col gap-2">
       {attachments.map((a) => (
         <div key={a.id} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
-          <a
-            href={`/api/attachments/${a.id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 hover:underline"
-          >
-            <Paperclip className="size-4 text-muted-foreground" />
-            {a.originalName}
-            <span className="text-xs text-muted-foreground">
-              {(a.sizeBytes / 1024).toFixed(0)} KB
-            </span>
-          </a>
-          {canManage && (
-            <Button variant="ghost" size="icon" onClick={() => remove(a.id)} disabled={isPending}>
-              <Trash2 className="size-4" />
-            </Button>
+          {editingId === a.id ? (
+            <Input
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={() => commitRename(a.id, a.originalName)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitRename(a.id, a.originalName);
+                if (e.key === "Escape") setEditingId(null);
+              }}
+              className="h-7 flex-1"
+            />
+          ) : (
+            <a
+              href={`/api/attachments/${a.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 truncate hover:underline"
+            >
+              <Paperclip className="size-4 shrink-0 text-muted-foreground" />
+              <span className="truncate">{a.originalName}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {(a.sizeBytes / 1024).toFixed(0)} KB
+              </span>
+            </a>
+          )}
+          {canManage && editingId !== a.id && (
+            <div className="flex shrink-0 items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Rename"
+                onClick={() => startEditing(a)}
+                disabled={isPending}
+              >
+                <Pencil className="size-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => remove(a.id)} disabled={isPending}>
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
           )}
         </div>
       ))}

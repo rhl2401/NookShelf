@@ -6,27 +6,33 @@ import { MAX_LOGO_DIMENSION } from "@/lib/branding-shared";
 export const AVATAR_SIZE = 256;
 const WEBP_QUALITY = 82;
 
-async function cropToSquareWebp(
+async function padToSquareWebp(
   input: Buffer,
   size: number,
 ): Promise<{ buffer: Buffer; width: number; height: number }> {
   // withoutEnlargement keeps a source smaller than `size` at its native
   // resolution instead of upscaling it — upscaling can't add detail that
   // wasn't there, it just bakes blur permanently into the stored webp.
+  // fit: "contain" letterboxes non-square images onto a transparent square
+  // instead of cropping their long edge away, so the full image survives.
   const { data, info } = await sharp(input)
-    .rotate() // apply EXIF orientation before cropping
-    .resize(size, size, { fit: "cover", position: "attention", withoutEnlargement: true })
+    .rotate() // apply EXIF orientation before resizing
+    .resize(size, size, {
+      fit: "contain",
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+      withoutEnlargement: true,
+    })
     .webp({ quality: WEBP_QUALITY })
     .toBuffer({ resolveWithObject: true });
   return { buffer: data, width: info.width, height: info.height };
 }
 
-/** Center-crops to a single square size, downscales, and re-encodes as webp — used for avatars. */
+/** Pads to a single square size (keeping the full image), downscales, and re-encodes as webp — used for avatars. */
 export async function processImageUpload(
   input: Buffer,
   size: number,
 ): Promise<{ buffer: Buffer; width: number; height: number }> {
-  return cropToSquareWebp(input, size);
+  return padToSquareWebp(input, size);
 }
 
 /**
@@ -43,8 +49,8 @@ export async function processPictureUpload(
   thumb: { buffer: Buffer; width: number; height: number };
 }> {
   const [main, thumb] = await Promise.all([
-    cropToSquareWebp(input, size),
-    cropToSquareWebp(input, THUMB_SIZE),
+    padToSquareWebp(input, size),
+    padToSquareWebp(input, THUMB_SIZE),
   ]);
 
   return { main, thumb };

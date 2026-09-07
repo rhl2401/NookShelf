@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { buildLocationTree, flattenLocationTree } from "@/lib/locations";
+import { buildLocationTree, flattenLocationTree, buildAncestryChains } from "@/lib/locations";
+import { LocationBreadcrumb } from "@/components/locations/location-breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,27 +43,36 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
 
   const activeCheckout = asset.checkouts[0];
 
-  const [assetTypes, tree, people, allAssets, myPictures, workspacePictures] = await Promise.all([
-    prisma.assetType.findMany({ orderBy: { name: "asc" } }),
-    buildLocationTree(),
-    prisma.person.findMany({ where: { status: { not: "MERGED" } }, orderBy: { name: "asc" } }),
-    prisma.asset.findMany({ select: { id: true, name: true, assetTag: true } }),
-    session.user.personId
-      ? prisma.picture.findMany({
-          where: { scope: "PERSONAL", ownerId: session.user.personId },
-          orderBy: { createdAt: "desc" },
-          take: 12,
-          select: { id: true, name: true },
-        })
-      : Promise.resolve([]),
-    prisma.picture.findMany({
-      where: { scope: "WORKSPACE" },
-      orderBy: { createdAt: "desc" },
-      take: 12,
-      select: { id: true, name: true },
-    }),
-  ]);
+  const [assetTypes, tree, people, allAssets, allTags, vendors, myPictures, workspacePictures] =
+    await Promise.all([
+      prisma.assetType.findMany({ orderBy: { name: "asc" } }),
+      buildLocationTree(),
+      prisma.person.findMany({ where: { status: { not: "MERGED" } }, orderBy: { name: "asc" } }),
+      prisma.asset.findMany({ select: { id: true, name: true, assetTag: true } }),
+      prisma.tag.findMany({ orderBy: { name: "asc" }, select: { name: true } }),
+      prisma.asset.findMany({
+        where: { vendor: { not: null } },
+        distinct: ["vendor"],
+        orderBy: { vendor: "asc" },
+        select: { vendor: true },
+      }),
+      session.user.personId
+        ? prisma.picture.findMany({
+            where: { scope: "PERSONAL", ownerId: session.user.personId },
+            orderBy: { createdAt: "desc" },
+            take: 12,
+            select: { id: true, name: true },
+          })
+        : Promise.resolve([]),
+      prisma.picture.findMany({
+        where: { scope: "WORKSPACE" },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        select: { id: true, name: true },
+      }),
+    ]);
   const flatLocations = flattenLocationTree(tree);
+  const locationAncestry = buildAncestryChains(tree);
   const fieldSchema = (asset.assetType.fieldSchema as AssetFieldDef[]) ?? [];
   const customFields = (asset.customFields as Record<string, unknown>) ?? {};
 
@@ -143,6 +153,8 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                   people={people}
                   assetOptions={allAssets}
                   defaultCurrency={defaultCurrency}
+                  tagSuggestions={allTags.map((t) => t.name)}
+                  vendorSuggestions={vendors.map((a) => a.vendor).filter((v) => v != null)}
                   asset={{
                     id: asset.id,
                     name: asset.name,
@@ -152,6 +164,7 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                     parentAssetId: asset.parentAssetId,
                     status: asset.status,
                     notes: asset.notes,
+                    inUseLocationNote: asset.inUseLocationNote,
                     purchaseDate: asset.purchaseDate,
                     purchasePrice: asset.purchasePrice?.toString() ?? null,
                     purchaseCurrency: asset.purchaseCurrency,
@@ -182,11 +195,14 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
               <Badge variant={assetStatusBadgeVariant(asset.status)}>
                 {assetStatusLabel(asset.status)}
               </Badge>
+              {asset.status === "IN_USE" && asset.inUseLocationNote && (
+                <span className="ml-2 text-muted-foreground">{asset.inUseLocationNote}</span>
+              )}
             </Row>
             <Row label="Location">
               {asset.location ? (
                 <Link href={`/locations/${asset.location.id}`} className="hover:underline">
-                  {asset.location.name}
+                  <LocationBreadcrumb chain={locationAncestry[asset.location.id] ?? [asset.location.name]} />
                 </Link>
               ) : (
                 "—"

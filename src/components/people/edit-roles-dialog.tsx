@@ -32,6 +32,11 @@ export function EditRolesDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setSelected(new Set(currentRoleIds));
+  }
+
   function toggle(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -46,7 +51,7 @@ export function EditRolesDialog({
       try {
         await updatePersonRoles(personId, Array.from(selected));
         toast.success("Roles updated");
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Couldn't update roles");
@@ -55,7 +60,7 @@ export function EditRolesDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton trigger={<Button variant="outline">Roles</Button>} />
       <DialogContent>
         <DialogHeader>
@@ -71,7 +76,7 @@ export function EditRolesDialog({
           ))}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending}>

@@ -27,6 +27,7 @@ import {
 import { assetStatusBadgeVariant, assetStatusLabel } from "@/lib/asset-status";
 import { bulkAssign, bulkMove, bulkRetire, bulkTag } from "@/lib/actions/assets";
 import { AssetPicture } from "@/components/asset-picture";
+import { LocationBreadcrumb } from "@/components/locations/location-breadcrumb";
 
 type AssetRow = {
   id: string;
@@ -51,11 +52,13 @@ type AssetRow = {
 export function AssetsTable({
   assets,
   flatLocations,
+  locationAncestry,
   people,
   canManage,
 }: {
   assets: AssetRow[];
   flatLocations: Array<{ id: string; label: string }>;
+  locationAncestry: Record<string, string[]>;
   people: Array<{ id: string; name: string }>;
   canManage: boolean;
 }) {
@@ -280,7 +283,15 @@ export function AssetsTable({
                 </TableCell>
                 <TableCell>{asset.assetType.name}</TableCell>
                 <TableCell>{asset.assetType.category ?? "—"}</TableCell>
-                <TableCell>{asset.location?.name ?? "—"}</TableCell>
+                <TableCell>
+                  {asset.location ? (
+                    <LocationBreadcrumb
+                      chain={locationAncestry[asset.location.id] ?? [asset.location.name]}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
                 <TableCell>{asset.assignedTo?.name ?? "—"}</TableCell>
                 <TableCell>
                   <Badge variant={assetStatusBadgeVariant(asset.status)}>

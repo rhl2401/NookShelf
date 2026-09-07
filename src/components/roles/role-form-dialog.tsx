@@ -43,6 +43,15 @@ export function RoleFormDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setName(role?.name ?? "");
+      setDescription(role?.description ?? "");
+      setPermissions(new Set(role?.permissions ?? []));
+    }
+  }
+
   function togglePermission(p: Permission) {
     setPermissions((prev) => {
       const next = new Set(prev);
@@ -66,7 +75,7 @@ export function RoleFormDialog({
           await createRole(input);
         }
         toast.success(role?.id ? "Role updated" : "Role created");
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -75,7 +84,7 @@ export function RoleFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton trigger={trigger as React.ReactElement} />
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -121,7 +130,7 @@ export function RoleFormDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !name}>

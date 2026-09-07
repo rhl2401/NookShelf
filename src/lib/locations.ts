@@ -72,6 +72,18 @@ export function flattenLocationTree(
   return result;
 }
 
+/** Maps every location id to its full ancestry chain of names, root-first, self included. */
+export function buildAncestryChains(nodes: LocationTreeNode[]): Record<string, string[]> {
+  const chains: Record<string, string[]> = {};
+  function walk(node: LocationTreeNode, ancestors: string[]) {
+    const chain = [...ancestors, node.name];
+    chains[node.id] = chain;
+    for (const child of node.children) walk(child, chain);
+  }
+  for (const root of nodes) walk(root, []);
+  return chains;
+}
+
 /** Returns [root, ..., self] for breadcrumbs. */
 export async function getLocationPath(locationId: string) {
   const path: { id: string; name: string }[] = [];

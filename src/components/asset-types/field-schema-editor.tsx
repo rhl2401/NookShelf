@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,7 +12,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
+import { CustomFieldsForm } from "@/components/assets/custom-fields-form";
 import type { AssetFieldDef, AssetFieldType } from "@/lib/asset-fields";
+
+function defaultLockedValue(type: AssetFieldType): AssetFieldDef["lockedValue"] {
+  switch (type) {
+    case "BOOLEAN":
+      return false;
+    case "NUMBER":
+      return 0;
+    case "MULTISELECT":
+      return [];
+    case "UNIT_NUMBER":
+      return { value: 0, unit: "" };
+    default:
+      return "";
+  }
+}
 
 const FIELD_TYPES: AssetFieldType[] = [
   "TEXT",
@@ -96,27 +113,21 @@ export function FieldSchemaEditor({
               </SelectContent>
             </Select>
 
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={Boolean(field.required)}
-                onCheckedChange={(checked) => update(index, { required: Boolean(checked) })}
-              />
-              Required
-            </label>
+            {field.lockedValue === undefined && (
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={Boolean(field.required)}
+                  onCheckedChange={(checked) => update(index, { required: Boolean(checked) })}
+                />
+                Required
+              </label>
+            )}
 
             {(field.type === "SELECT" || field.type === "MULTISELECT") && (
-              <Input
-                placeholder="Options, comma separated"
-                className="min-w-56 flex-1"
-                value={(field.options ?? []).join(", ")}
-                onChange={(e) =>
-                  update(index, {
-                    options: e.target.value
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
-                  })
-                }
+              <OptionsInput
+                key={field.key || index}
+                options={field.options ?? []}
+                onChange={(options) => update(index, { options })}
               />
             )}
 
@@ -128,7 +139,38 @@ export function FieldSchemaEditor({
                 onChange={(e) => update(index, { unit: e.target.value })}
               />
             )}
+
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={field.lockedValue !== undefined}
+                onCheckedChange={(checked) =>
+                  update(index, {
+                    lockedValue: checked ? defaultLockedValue(field.type) : undefined,
+                    required: checked ? undefined : field.required,
+                  })
+                }
+              />
+              Fixed value
+            </label>
           </div>
+
+          {field.lockedValue !== undefined && (
+            <div className="rounded-lg border border-dashed p-2">
+              <CustomFieldsForm
+                schema={[{ ...field, lockedValue: undefined, required: false }]}
+                values={{ [field.key]: field.lockedValue }}
+                onChange={(next) =>
+                  update(index, {
+                    lockedValue: next[field.key] as AssetFieldDef["lockedValue"],
+                  })
+                }
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Every asset of this type gets this value automatically — it won&apos;t be shown as
+                a field to fill in when creating one.
+              </p>
+            </div>
+          )}
         </div>
       ))}
 
@@ -136,5 +178,37 @@ export function FieldSchemaEditor({
         <Plus /> Add field
       </Button>
     </div>
+  );
+}
+
+// Kept as raw draft text, separate from the parsed `options` array — deriving
+// the input's value from the array meant a trailing comma or space (about to
+// start a new option) was immediately stripped by the split/trim/filter
+// round-trip, so those keys visually appeared to do nothing.
+function OptionsInput({
+  options,
+  onChange,
+}: {
+  options: string[];
+  onChange: (options: string[]) => void;
+}) {
+  const [text, setText] = useState(options.join(", "));
+
+  return (
+    <Input
+      placeholder="Options, comma separated"
+      className="min-w-56 flex-1"
+      value={text}
+      onChange={(e) => {
+        const next = e.target.value;
+        setText(next);
+        onChange(
+          next
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        );
+      }}
+    />
   );
 }

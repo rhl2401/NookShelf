@@ -44,14 +44,21 @@ export function WebhookFormDialog() {
     });
   }
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setUrl("");
+      setSecret("");
+      setEvents(new Set(EVENT_TYPES));
+    }
+  }
+
   function submit() {
     startTransition(async () => {
       try {
         await createWebhook({ url, secret: secret || undefined, events: Array.from(events) });
         toast.success("Webhook added");
-        setOpen(false);
-        setUrl("");
-        setSecret("");
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Couldn't add webhook");
@@ -60,7 +67,7 @@ export function WebhookFormDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton
         trigger={
           <Button variant="outline">
@@ -96,7 +103,7 @@ export function WebhookFormDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !url || events.size === 0}>

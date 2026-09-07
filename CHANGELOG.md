@@ -8,6 +8,43 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.13.0
+
+- Every entity dialog (Asset, Asset Type, Kit, Consumable, Location, Role, Person, Checkout,
+  Webhook, and more) now resets its draft fields whenever it closes — on Cancel, Escape, backdrop
+  click, or a successful submit alike. Previously the same dialog instance kept whatever you'd
+  typed, so reopening it for a new entity showed the last one's data.
+- Assets marked "In use" can now carry a free-text "Where is it?" note (e.g. "Rasmus's desk",
+  "Conference room B") — separate from the formal Location, which is where it's normally stored.
+  Shown on the asset's detail page and included in the data import/export bundle.
+- Fixed attachment uploads: Next's default 1MB Server Actions body limit was rejecting any receipt
+  photo or scan over that size, before the app's own 20MB check ever ran. Raised to 25MB.
+  Attachments can now be renamed in place via a pencil icon next to the file.
+- Every picture/icon picker (Asset, Asset Type, Kit, Consumable, Location) can now fetch an image
+  from a pasted URL instead of requiring a file upload, processed through the same pipeline as a
+  normal upload. The fetch is guarded against SSRF — http(s) only, no redirects, and the
+  resolved hostname is checked against private/loopback/link-local ranges before connecting.
+- A location's full parent chain now displays as a breadcrumb of pills (e.g. "Office building A
+  › Location A › Storage A") wherever a location name is shown — the asset detail page, the
+  Assets table's Location column, and the Dashboard's "Assets by location" card.
+- Vendor and Tags now remember previously-used values and suggest them as you type, the same
+  "remembered" feel across both fields. Tags are also garbage-collected: removing the last asset
+  referencing a tag deletes that tag, so stale ones don't linger in filters and suggestions.
+- Warranty date gets quick-select buttons (30 days / 1 / 6 months / 1 / 2 / 3 years) computed
+  from the Purchase date field.
+- Fixed: wide or tall images uploaded as a picture/icon were center-cropped, losing their edges.
+  They're now padded onto a transparent square instead, keeping the full image.
+- Fixed: typing a comma or space while entering Select/Multiselect field options appeared to do
+  nothing — the input's value was derived from the parsed option list, so an in-progress trailing
+  comma or space was stripped on every keystroke.
+- The location detail page's asset list now shows a "Checked out" badge and has a "Hide
+  checked-out" filter to focus on what's actually available at that location.
+- Asset types can bake a fixed value into a custom field — e.g. an "Audio Cable" type can lock
+  its Category field to "Audio". Every asset of that type gets the value automatically, with no
+  editable control shown when creating one.
+- Schema change: adds `Asset.inUseLocationNote` (nullable). Applied automatically via
+  `prisma migrate deploy` — no manual steps.
+
 ## 1.12.0
 
 - Assets can now be marked "Bought second-hand" (a simple checkbox next to Purchase date) —

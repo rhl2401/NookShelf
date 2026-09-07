@@ -66,6 +66,19 @@ export function LocationFormDialog({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setName(location?.name ?? "");
+      setParentId(location?.parentId ?? defaultParentId ?? "none");
+      setCode(location?.code ?? "");
+      setIcon(location?.icon ?? null);
+      setIconColor(location?.iconColor ?? null);
+      setPictureId(location?.primaryPictureId ?? null);
+      setNotes(location?.notes ?? "");
+    }
+  }
+
   function submit() {
     startTransition(async () => {
       try {
@@ -85,7 +98,7 @@ export function LocationFormDialog({
           await createLocation(payload);
         }
         toast.success(location?.id ? "Location updated" : "Location created");
-        setOpen(false);
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -94,7 +107,7 @@ export function LocationFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton trigger={trigger} />
       <DialogContent>
         <DialogHeader>
@@ -165,7 +178,7 @@ export function LocationFormDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !name}>

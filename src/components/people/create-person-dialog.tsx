@@ -25,14 +25,20 @@ export function CreatePersonDialog() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setName("");
+      setEmail("");
+    }
+  }
+
   function submit() {
     startTransition(async () => {
       try {
         await createPerson({ name, email });
         toast.success("Person created");
-        setOpen(false);
-        setName("");
-        setEmail("");
+        handleOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Couldn't create person");
@@ -41,7 +47,7 @@ export function CreatePersonDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTriggerButton
         trigger={
           <Button>
@@ -73,7 +79,7 @@ export function CreatePersonDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={isPending || !name}>
