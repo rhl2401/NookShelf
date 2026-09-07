@@ -14,6 +14,18 @@ import type { AssetFieldDef } from "@/lib/asset-fields";
 
 export type CustomFieldValues = Record<string, unknown>;
 
+function formatLockedValue(field: AssetFieldDef): string {
+  const v = field.lockedValue;
+  if (v == null || v === "") return "—";
+  if (field.type === "BOOLEAN") return v ? "Yes" : "No";
+  if (field.type === "MULTISELECT" && Array.isArray(v)) return v.join(", ");
+  if (field.type === "UNIT_NUMBER" && typeof v === "object") {
+    const u = v as { value?: number; unit?: string };
+    return u.value != null ? `${u.value}${u.unit ? ` ${u.unit}` : ""}` : "—";
+  }
+  return String(v);
+}
+
 export function CustomFieldsForm({
   schema,
   values,
@@ -35,9 +47,17 @@ export function CustomFieldsForm({
         <div key={field.key} className="grid gap-1.5">
           <Label>
             {field.label}
-            {field.required && <span className="text-destructive"> *</span>}
+            {field.required && field.lockedValue === undefined && (
+              <span className="text-destructive"> *</span>
+            )}
           </Label>
 
+          {field.lockedValue !== undefined ? (
+            <div className="flex h-8 items-center text-sm text-muted-foreground">
+              {formatLockedValue(field)}
+            </div>
+          ) : (
+            <>
           {field.type === "TEXT" && (
             <Input
               value={(values[field.key] as string) ?? ""}
@@ -158,6 +178,8 @@ export function CustomFieldsForm({
                 </span>
               )}
             </div>
+          )}
+            </>
           )}
         </div>
       ))}

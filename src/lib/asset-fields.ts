@@ -17,6 +17,10 @@ export type AssetFieldDef = {
   options?: string[]; // for SELECT / MULTISELECT
   unit?: string; // default unit label for UNIT_NUMBER, e.g. "m", "V", "A", "W"
   unitOptions?: string[]; // selectable units, e.g. ["m", "ft"]
+  // When set, every asset of this type always carries this value for the
+  // field — it's baked into the type (e.g. category: "Audio" for an Audio
+  // Cable type) and isn't shown as an editable control on the asset form.
+  lockedValue?: string | number | boolean | string[] | { value?: number; unit?: string };
 };
 
 /** Validates one AssetFieldDef — shared by asset-type CRUD and template import. */
@@ -32,6 +36,15 @@ export const fieldDefSchema = z.object({
   options: z.array(z.string()).optional(),
   unit: z.string().max(20).optional(),
   unitOptions: z.array(z.string()).optional(),
+  lockedValue: z
+    .union([
+      z.string(),
+      z.number(),
+      z.boolean(),
+      z.array(z.string()),
+      z.object({ value: z.number().optional(), unit: z.string().optional() }),
+    ])
+    .optional(),
 });
 
 export const CABLE_FIELD_SCHEMA: AssetFieldDef[] = [
@@ -159,6 +172,13 @@ export function validateCustomFields(
   const result: Record<string, unknown> = {};
 
   for (const field of schema) {
+    // Locked fields always carry their baked-in value — enforced here so a
+    // stale or tampered client payload can never override it.
+    if (field.lockedValue !== undefined) {
+      result[field.key] = field.lockedValue;
+      continue;
+    }
+
     const raw = values[field.key];
     const isEmpty = raw === undefined || raw === null || raw === "";
 
