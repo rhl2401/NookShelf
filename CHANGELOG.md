@@ -17,6 +17,8 @@ first — always back up before pulling a new version.
 - The Assets list is now sortable — click any column header (including a new "Category" column,
   showing the asset type's category) to sort by it, click again to reverse. Tags sort
   alphabetically by each asset's first tag; untagged assets sort last either way.
+- The Assets filter bar has a new "Tags" filter, alongside Type/Location/Status — pick one or
+  more tags to show assets matching any of them.
 - Schema change: adds `Asset.isSecondHand` (defaults to `false`). Applied automatically via
   `prisma migrate deploy` — no manual steps.
 

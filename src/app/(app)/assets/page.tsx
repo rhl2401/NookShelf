@@ -21,6 +21,7 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
   const typeFilter = typeof sp.type === "string" ? sp.type : undefined;
   const locationFilter = typeof sp.location === "string" ? sp.location : undefined;
   const statusFilter = typeof sp.status === "string" ? sp.status : undefined;
+  const tagsFilter = Array.isArray(sp.tags) ? sp.tags : typeof sp.tags === "string" ? [sp.tags] : [];
   const sortColumn = typeof sp.sort === "string" ? sp.sort : undefined;
   const sortDir: "asc" | "desc" = sp.dir === "desc" ? "desc" : "asc";
 
@@ -37,6 +38,9 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
   if (locationFilter) {
     const ids = await getDescendantLocationIds(locationFilter);
     where.locationId = { in: ids };
+  }
+  if (tagsFilter.length > 0) {
+    where.tags = { some: { tag: { name: { in: tagsFilter } } } };
   }
 
   // Tags are multi-valued (many-to-many), so Prisma can't order by them
@@ -59,36 +63,38 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
                 ? { status: sortDir }
                 : { createdAt: "desc" };
 
-  const [assets, assetTypes, tree, people, myPictures, workspacePictures] = await Promise.all([
-    prisma.asset.findMany({
-      where,
-      include: {
-        assetType: true,
-        location: true,
-        assignedTo: true,
-        tags: { include: { tag: true } },
-      },
-      orderBy,
-      take: isTagSort ? 5000 : 200,
-    }),
-    prisma.assetType.findMany({ orderBy: { name: "asc" } }),
-    buildLocationTree(),
-    prisma.person.findMany({ where: { status: { not: "MERGED" } }, orderBy: { name: "asc" } }),
-    session.user.personId
-      ? prisma.picture.findMany({
-          where: { scope: "PERSONAL", ownerId: session.user.personId },
-          orderBy: { createdAt: "desc" },
-          take: 12,
-          select: { id: true, name: true },
-        })
-      : Promise.resolve([]),
-    prisma.picture.findMany({
-      where: { scope: "WORKSPACE" },
-      orderBy: { createdAt: "desc" },
-      take: 12,
-      select: { id: true, name: true },
-    }),
-  ]);
+  const [assets, assetTypes, tree, people, allTags, myPictures, workspacePictures] =
+    await Promise.all([
+      prisma.asset.findMany({
+        where,
+        include: {
+          assetType: true,
+          location: true,
+          assignedTo: true,
+          tags: { include: { tag: true } },
+        },
+        orderBy,
+        take: isTagSort ? 5000 : 200,
+      }),
+      prisma.assetType.findMany({ orderBy: { name: "asc" } }),
+      buildLocationTree(),
+      prisma.person.findMany({ where: { status: { not: "MERGED" } }, orderBy: { name: "asc" } }),
+      prisma.tag.findMany({ orderBy: { name: "asc" }, select: { name: true } }),
+      session.user.personId
+        ? prisma.picture.findMany({
+            where: { scope: "PERSONAL", ownerId: session.user.personId },
+            orderBy: { createdAt: "desc" },
+            take: 12,
+            select: { id: true, name: true },
+          })
+        : Promise.resolve([]),
+      prisma.picture.findMany({
+        where: { scope: "WORKSPACE" },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        select: { id: true, name: true },
+      }),
+    ]);
 
   const flatLocations = flattenLocationTree(tree);
   const assetOptions = assets.map((a) => ({ id: a.id, name: a.name, assetTag: a.assetTag }));
@@ -154,7 +160,11 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
         </div>
       </div>
 
-      <AssetsFilterBar assetTypes={assetTypes} flatLocations={flatLocations} />
+      <AssetsFilterBar
+        assetTypes={assetTypes}
+        flatLocations={flatLocations}
+        tags={allTags.map((t) => t.name)}
+      />
 
       <AssetsTable
         assets={tableAssets}
