@@ -8,6 +8,16 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.13.1
+
+- Fixes blurry thumbnails on the Pictures library page. The grid always fetched the fixed 64×64
+  thumbnail but displayed it in cells roughly 85-140px wide, so the browser stretched it well
+  past its native resolution — visibly soft, especially since 1.13.0's crop-to-pad change means
+  non-square photos pack less real detail into that 64px canvas to begin with. Now uses the full
+  picture, same as everywhere else a picture is shown above thumbnail size.
+- No schema changes. No manual steps — every existing picture already has a full-size version
+  stored, so this takes effect immediately.
+
 ## 1.13.0
 
 - Every entity dialog (Asset, Asset Type, Kit, Consumable, Location, Role, Person, Checkout,
