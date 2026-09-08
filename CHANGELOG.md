@@ -8,6 +8,25 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.14.0
+
+- A location that only holds sub-locations (0 assets of its own) used to look empty on the
+  Dashboard's "Assets by location" card. It now shows "N in sub-locations" alongside the direct
+  count whenever the two differ, using the counts already rolled up for the location tree.
+- Added loading skeletons to the Assets and Pictures pages — both are async pages that wait on
+  several database queries before rendering, so navigating to either used to show a blank page
+  until the data arrived.
+- "Part of (parent asset)" is now a searchable combobox instead of a plain dropdown — no more
+  scrolling through every asset in the workspace to find one by name.
+- Shrunk the Docker image from 2.72GB to 786MB (~71% smaller). It was shipping a full production
+  `node_modules` install in the final image instead of Next.js's traced, minimal standalone
+  output; switched to `output: "standalone"`, with a small separate install for the `prisma` CLI
+  and `tsx` that the startup migration/seed step needs (neither is reachable by Next's own
+  tracing, since that script runs outside the app's request-handling code). No behavior change —
+  verified end-to-end against a real database that migrations, seeding, and the app itself all
+  still work identically.
+- No schema changes. No manual steps.
+
 ## 1.13.1
 
 - Fixes blurry thumbnails on the Pictures library page. The grid always fetched the fixed 64×64

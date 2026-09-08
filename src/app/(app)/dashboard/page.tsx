@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { addDays } from "date-fns";
-import { buildLocationTree, buildAncestryChains } from "@/lib/locations";
+import { buildLocationTree, buildAncestryChains, flattenNodesById } from "@/lib/locations";
 import { LocationBreadcrumb } from "@/components/locations/location-breadcrumb";
 
 export default async function DashboardPage() {
@@ -19,7 +19,6 @@ export default async function DashboardPage() {
     checkedOutCount,
     overdueCheckouts,
     warrantyExpiring,
-    byLocation,
     consumablesWithThreshold,
     locationTree,
   ] = await Promise.all([
@@ -36,11 +35,6 @@ export default async function DashboardPage() {
       orderBy: { warrantyExpiresAt: "asc" },
       take: 10,
     }),
-    prisma.location.findMany({
-      include: { _count: { select: { assets: true } } },
-      orderBy: { name: "asc" },
-      take: 8,
-    }),
     canViewConsumables
       ? prisma.consumable.findMany({
           where: { lowStockThreshold: { not: null } },
@@ -50,6 +44,9 @@ export default async function DashboardPage() {
     buildLocationTree(),
   ]);
   const locationAncestry = buildAncestryChains(locationTree);
+  const byLocation = Object.values(flattenNodesById(locationTree))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 8);
 
   const lowStockConsumables = consumablesWithThreshold.filter(
     (c) => c.lowStockThreshold != null && c.quantity <= c.lowStockThreshold,
@@ -165,7 +162,12 @@ export default async function DashboardPage() {
               className="rounded-lg border p-3 text-sm hover:bg-muted/50"
             >
               <LocationBreadcrumb chain={locationAncestry[loc.id] ?? [loc.name]} />
-              <p className="text-muted-foreground">{loc._count.assets} assets</p>
+              <p className="text-muted-foreground">
+                {loc.directAssetCount} assets
+                {loc.totalAssetCount > loc.directAssetCount && (
+                  <>, {loc.totalAssetCount - loc.directAssetCount} in sub-locations</>
+                )}
+              </p>
             </Link>
           ))}
           {byLocation.length === 0 && (

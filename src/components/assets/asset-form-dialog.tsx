@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CustomFieldsForm, type CustomFieldValues } from "@/components/assets/custom-fields-form";
+import { AssetCombobox } from "@/components/assets/asset-combobox";
 import { TagsInput } from "@/components/ui-custom/tags-input";
 import { SuggestInput } from "@/components/ui-custom/suggest-input";
 import { PictureIconEditor } from "@/components/pictures/picture-icon-editor";
@@ -338,28 +339,11 @@ export function AssetFormDialog({
 
             <div className="col-span-2 grid gap-1.5">
               <Label>Part of (parent asset)</Label>
-              <Select
+              <AssetCombobox
                 value={parentAssetId ?? "none"}
-                onValueChange={(v) => setParentAssetId(v ?? "none")}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="None">
-                    {(v: string) =>
-                      v === "none" ? "None" : assetOptions.find((a) => a.id === v)?.name
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {assetOptions
-                    .filter((a) => a.id !== asset?.id)
-                    .map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.name} ({a.assetTag})
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+                onChange={setParentAssetId}
+                options={assetOptions.filter((a) => a.id !== asset?.id)}
+              />
             </div>
 
             <div className="grid gap-1.5">

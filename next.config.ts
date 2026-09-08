@@ -16,6 +16,11 @@ const cspHeader = `
 `;
 
 const nextConfig: NextConfig = {
+  // Traces only the node_modules actually reachable at runtime into
+  // .next/standalone, instead of shipping the full install — the Docker
+  // image's runner stage copies that traced output rather than node_modules
+  // wholesale, which is most of what makes the image so much smaller.
+  output: "standalone",
   // Default Server Actions body limit is 1MB — too small for attachment
   // uploads (uploadAttachment enforces its own 20MB cap; give it headroom
   // for multipart/FormData overhead).

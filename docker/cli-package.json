@@ -1,0 +1,12 @@
+{
+  "name": "nookshelf-cli-tools",
+  "private": true,
+  "description": "Slim, standalone install of just the packages the container's entrypoint needs to run migrate/seed at startup (prisma CLI, tsx) — kept separate from the main app's package.json so a normal `npm ci` here doesn't drag in devDependencies or the app's full dependency tree; the main runner image copies this node_modules on top of Next's traced standalone output.",
+  "dependencies": {
+    "prisma": "^7.10.0",
+    "tsx": "^4.23.13",
+    "dotenv": "^17.4.2",
+    "@prisma/client": "^7.10.0",
+    "@prisma/adapter-pg": "^7.10.0"
+  }
+}

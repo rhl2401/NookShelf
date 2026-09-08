@@ -84,6 +84,19 @@ export function buildAncestryChains(nodes: LocationTreeNode[]): Record<string, s
   return chains;
 }
 
+/** Flattens the tree into a lookup map keyed by location id — all fields preserved. */
+export function flattenNodesById(nodes: LocationTreeNode[]): Record<string, LocationTreeNode> {
+  const map: Record<string, LocationTreeNode> = {};
+  function walk(list: LocationTreeNode[]) {
+    for (const node of list) {
+      map[node.id] = node;
+      walk(node.children);
+    }
+  }
+  walk(nodes);
+  return map;
+}
+
 /** Returns [root, ..., self] for breadcrumbs. */
 export async function getLocationPath(locationId: string) {
   const path: { id: string; name: string }[] = [];
