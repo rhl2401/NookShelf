@@ -262,7 +262,7 @@ export function AssetsTable({
                   </TableCell>
                 )}
                 <TableCell>
-                  <Link href={`/assets/${asset.id}`} className="flex items-center gap-2 hover:underline">
+                  <Link href={`/assets/${asset.id}`} className="flex items-center gap-3 hover:underline">
                     <AssetPicture
                       pictureId={asset.primaryPictureId}
                       icon={asset.icon}
@@ -271,7 +271,7 @@ export function AssetsTable({
                       typeColor={asset.assetType.iconColor}
                       inheritTypeIcon={asset.assetType.inheritIcon}
                       alt={asset.name}
-                      size="sm"
+                      size="md"
                     />
                     <span>
                       <span className="font-medium">{asset.name}</span>
