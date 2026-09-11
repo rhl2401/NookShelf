@@ -43,7 +43,7 @@ first — always back up before pulling a new version.
   Webhook, and more) now resets its draft fields whenever it closes — on Cancel, Escape, backdrop
   click, or a successful submit alike. Previously the same dialog instance kept whatever you'd
   typed, so reopening it for a new entity showed the last one's data.
-- Assets marked "In use" can now carry a free-text "Where is it?" note (e.g. "Rasmus's desk",
+- Assets marked "In use" can now carry a free-text "Where is it?" note (e.g. "Front desk",
   "Conference room B") — separate from the formal Location, which is where it's normally stored.
   Shown on the asset's detail page and included in the data import/export bundle.
 - Fixed attachment uploads: Next's default 1MB Server Actions body limit was rejecting any receipt
