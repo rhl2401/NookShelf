@@ -52,12 +52,19 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export function Sidebar({ permissions }: { permissions: string[] }) {
+/** The nav links + version footer shared by the persistent desktop sidebar and the mobile drawer. */
+export function SidebarContent({
+  permissions,
+  onNavigate,
+}: {
+  permissions: string[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const permissionSet = new Set(permissions);
 
   return (
-    <nav className="flex h-full w-60 shrink-0 flex-col border-r bg-background px-3 py-4">
+    <>
       <div className="flex flex-col gap-1">
         {NAV_ITEMS.filter((item) => !item.permission || permissionSet.has(item.permission)).map(
           (item) => {
@@ -67,6 +74,7 @@ export function Sidebar({ permissions }: { permissions: string[] }) {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={onNavigate}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   active
@@ -92,6 +100,15 @@ export function Sidebar({ permissions }: { permissions: string[] }) {
       <p className="mt-auto px-3 pt-4 text-[10px] text-muted-foreground/60 select-none">
         v{packageJson.version}
       </p>
+    </>
+  );
+}
+
+/** Persistent sidebar — hidden below md:, where MobileSidebar's drawer takes over instead. */
+export function Sidebar({ permissions }: { permissions: string[] }) {
+  return (
+    <nav className="hidden h-full w-60 shrink-0 flex-col border-r bg-background px-3 py-4 md:flex">
+      <SidebarContent permissions={permissions} />
     </nav>
   );
 }

@@ -45,10 +45,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         logoUrl={logoUrl}
         icon={branding.icon}
         iconColor={branding.iconColor}
+        permissions={session.user.permissions}
       />
       <div className="flex min-h-0 flex-1">
         <Sidebar permissions={session.user.permissions} />
-        <main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-y-auto bg-muted/20 p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );
