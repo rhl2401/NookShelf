@@ -283,7 +283,7 @@ export function AssetFormDialog({
                 <Input
                   value={inUseLocationNote}
                   onChange={(e) => setInUseLocationNote(e.target.value)}
-                  placeholder="e.g. Rasmus's desk"
+                  placeholder="e.g. Front desk, Conference room B"
                 />
               </div>
             )}

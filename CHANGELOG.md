@@ -8,6 +8,19 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.15.0
+
+- Asset pictures/icons in the Assets table are now 1.5x larger (32px → 48px) — the thumbnails
+  were hard to make out at a glance in the list view.
+- The sidebar is now collapsible on small screens. Below 768px wide it's hidden entirely, and a
+  hamburger button in the top bar opens the same navigation as a slide-in drawer instead; picking
+  a link closes the drawer. Nothing changes at tablet/desktop widths — the persistent sidebar
+  renders exactly as before. The main content area's padding is also slightly tighter on small
+  screens.
+- Scrubbed a few incidental personal references (a local file path in a schema comment, a
+  real-name placeholder example) ahead of open-sourcing the project. No functional change.
+- No schema changes. No manual steps.
+
 ## 1.14.0
 
 - A location that only holds sub-locations (0 assets of its own) used to look empty on the
@@ -43,7 +56,7 @@ first — always back up before pulling a new version.
   Webhook, and more) now resets its draft fields whenever it closes — on Cancel, Escape, backdrop
   click, or a successful submit alike. Previously the same dialog instance kept whatever you'd
   typed, so reopening it for a new entity showed the last one's data.
-- Assets marked "In use" can now carry a free-text "Where is it?" note (e.g. "Rasmus's desk",
+- Assets marked "In use" can now carry a free-text "Where is it?" note (e.g. "Front desk",
   "Conference room B") — separate from the formal Location, which is where it's normally stored.
   Shown on the asset's detail page and included in the data import/export bundle.
 - Fixed attachment uploads: Next's default 1MB Server Actions body limit was rejecting any receipt
