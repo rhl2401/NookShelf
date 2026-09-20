@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Copy } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ import { assetStatusBadgeVariant, assetStatusLabel } from "@/lib/asset-status";
 import { bulkAssign, bulkMove, bulkRetire, bulkTag } from "@/lib/actions/assets";
 import { AssetPicture } from "@/components/asset-picture";
 import { LocationBreadcrumb } from "@/components/locations/location-breadcrumb";
+import { AssetFormDialog } from "@/components/assets/asset-form-dialog";
+import type { PictureRef } from "@/components/pictures/picture-row";
 
 type AssetRow = {
   id: string;
@@ -48,6 +50,7 @@ type AssetRow = {
   assignedTo: { id: string; name: string } | null;
   tags: Array<{ tag: { name: string } }>;
   replaceByAt: Date | null;
+  duplicateData: React.ComponentProps<typeof AssetFormDialog>["duplicateFrom"];
 };
 
 export function AssetsTable({
@@ -56,12 +59,26 @@ export function AssetsTable({
   locationAncestry,
   people,
   canManage,
+  assetTypes,
+  assetOptions,
+  defaultCurrency,
+  myPictures,
+  workspacePictures,
+  tagSuggestions,
+  vendorSuggestions,
 }: {
   assets: AssetRow[];
   flatLocations: Array<{ id: string; label: string }>;
   locationAncestry: Record<string, string[]>;
   people: Array<{ id: string; name: string }>;
   canManage: boolean;
+  assetTypes: React.ComponentProps<typeof AssetFormDialog>["assetTypes"];
+  assetOptions: React.ComponentProps<typeof AssetFormDialog>["assetOptions"];
+  defaultCurrency: string;
+  myPictures: PictureRef[];
+  workspacePictures: PictureRef[];
+  tagSuggestions: string[];
+  vendorSuggestions: string[];
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
@@ -252,6 +269,7 @@ export function AssetsTable({
               <SortableHead column="replaceBy" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
                 Replace by
               </SortableHead>
+              {canManage && <TableHead className="w-10" />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -314,11 +332,35 @@ export function AssetsTable({
                 <TableCell>
                   {asset.replaceByAt ? asset.replaceByAt.toLocaleDateString() : "—"}
                 </TableCell>
+                {canManage && (
+                  <TableCell>
+                    <AssetFormDialog
+                      trigger={
+                        <Button variant="ghost" size="icon" title="Duplicate">
+                          <Copy className="size-4" />
+                        </Button>
+                      }
+                      assetTypes={assetTypes}
+                      flatLocations={flatLocations}
+                      people={people}
+                      assetOptions={assetOptions}
+                      defaultCurrency={defaultCurrency}
+                      myPictures={myPictures}
+                      workspacePictures={workspacePictures}
+                      tagSuggestions={tagSuggestions}
+                      vendorSuggestions={vendorSuggestions}
+                      duplicateFrom={asset.duplicateData}
+                    />
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {assets.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={8 + (canManage ? 2 : 0)}
+                  className="py-8 text-center text-muted-foreground"
+                >
                   No assets match these filters.
                 </TableCell>
               </TableRow>

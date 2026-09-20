@@ -61,6 +61,34 @@ type LocationOption = { id: string; label: string };
 type PersonOption = { id: string; name: string };
 type AssetOption = { id: string; name: string; assetTag: string };
 
+type AssetFormValues = {
+  name: string;
+  assetTypeId: string;
+  locationId: string | null;
+  assignedToId: string | null;
+  parentAssetId: string | null;
+  status: string;
+  notes: string | null;
+  inUseLocationNote?: string | null;
+  purchaseDate: Date | string | null;
+  purchasePrice: unknown;
+  purchaseCurrency: string | null;
+  isSecondHand?: boolean;
+  vendor: string | null;
+  warrantyExpiresAt: Date | string | null;
+  replaceByAt: Date | string | null;
+  customFields: unknown;
+  tags?: string[];
+};
+
+// Prefill for the "Duplicate" flow — same shape edit uses, plus the
+// icon/picture fields (only settable at creation time, see createAssetSchema).
+type AssetPrefill = AssetFormValues & {
+  icon?: string | null;
+  iconColor?: string | null;
+  primaryPictureId?: string | null;
+};
+
 export function AssetFormDialog({
   trigger,
   assetTypes,
@@ -68,6 +96,7 @@ export function AssetFormDialog({
   people,
   assetOptions,
   asset,
+  duplicateFrom,
   defaultAssetTypeId,
   defaultCurrency = "USD",
   myPictures = [],
@@ -86,62 +115,55 @@ export function AssetFormDialog({
   workspacePictures?: PictureRef[];
   tagSuggestions?: string[];
   vendorSuggestions?: string[];
-  asset?: {
-    id: string;
-    name: string;
-    assetTypeId: string;
-    locationId: string | null;
-    assignedToId: string | null;
-    parentAssetId: string | null;
-    status: string;
-    notes: string | null;
-    inUseLocationNote?: string | null;
-    purchaseDate: Date | string | null;
-    purchasePrice: unknown;
-    purchaseCurrency: string | null;
-    isSecondHand?: boolean;
-    vendor: string | null;
-    warrantyExpiresAt: Date | string | null;
-    replaceByAt: Date | string | null;
-    customFields: unknown;
-    tags?: string[];
-  };
+  asset?: AssetFormValues & { id: string };
+  // Prefills a brand-new (no id — doesn't tie back to the source asset in any
+  // way) asset with another asset's values, for the "Duplicate" action.
+  // Mutually exclusive with `asset`.
+  duplicateFrom?: AssetPrefill;
 }) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(asset?.name ?? "");
+  const isDuplicate = !asset && !!duplicateFrom;
+  const source = asset ?? duplicateFrom;
+  const [name, setName] = useState(
+    isDuplicate && source?.name ? `Copy of ${source.name}` : (source?.name ?? ""),
+  );
   const [assetTypeId, setAssetTypeId] = useState(
-    asset?.assetTypeId ??
+    source?.assetTypeId ??
       defaultAssetTypeId ??
       assetTypes.find((t) => t.name === "Generic")?.id ??
       assetTypes[0]?.id ??
       "",
   );
-  const [locationId, setLocationId] = useState(asset?.locationId ?? "none");
-  const [assignedToId, setAssignedToId] = useState(asset?.assignedToId ?? "none");
-  const [parentAssetId, setParentAssetId] = useState(asset?.parentAssetId ?? "none");
-  const [status, setStatus] = useState(asset?.status ?? "IN_STORAGE");
-  const [notes, setNotes] = useState(asset?.notes ?? "");
-  const [inUseLocationNote, setInUseLocationNote] = useState(asset?.inUseLocationNote ?? "");
-  const [purchaseDate, setPurchaseDate] = useState(toDateInput(asset?.purchaseDate));
+  const [locationId, setLocationId] = useState(source?.locationId ?? "none");
+  const [assignedToId, setAssignedToId] = useState(source?.assignedToId ?? "none");
+  const [parentAssetId, setParentAssetId] = useState(source?.parentAssetId ?? "none");
+  // A duplicated asset never inherits CHECKED_OUT — that status is backed by a
+  // real Checkout record, and duplicating doesn't create one.
+  const [status, setStatus] = useState(
+    isDuplicate && source?.status === "CHECKED_OUT" ? "IN_STORAGE" : (source?.status ?? "IN_STORAGE"),
+  );
+  const [notes, setNotes] = useState(source?.notes ?? "");
+  const [inUseLocationNote, setInUseLocationNote] = useState(source?.inUseLocationNote ?? "");
+  const [purchaseDate, setPurchaseDate] = useState(toDateInput(source?.purchaseDate));
   const [purchasePrice, setPurchasePrice] = useState(
-    asset?.purchasePrice != null ? String(asset.purchasePrice) : "",
+    source?.purchasePrice != null ? String(source.purchasePrice) : "",
   );
   const [purchaseCurrency, setPurchaseCurrency] = useState(
-    asset?.purchaseCurrency ?? defaultCurrency,
+    source?.purchaseCurrency ?? defaultCurrency,
   );
-  const [isSecondHand, setIsSecondHand] = useState(asset?.isSecondHand ?? false);
-  const [vendor, setVendor] = useState(asset?.vendor ?? "");
+  const [isSecondHand, setIsSecondHand] = useState(source?.isSecondHand ?? false);
+  const [vendor, setVendor] = useState(source?.vendor ?? "");
   const [warrantyExpiresAt, setWarrantyExpiresAt] = useState(
-    toDateInput(asset?.warrantyExpiresAt),
+    toDateInput(source?.warrantyExpiresAt),
   );
-  const [replaceByAt, setReplaceByAt] = useState(toDateInput(asset?.replaceByAt));
-  const [tags, setTags] = useState<string[]>(asset?.tags ?? []);
+  const [replaceByAt, setReplaceByAt] = useState(toDateInput(source?.replaceByAt));
+  const [tags, setTags] = useState<string[]>(source?.tags ?? []);
   const [customFields, setCustomFields] = useState<CustomFieldValues>(
-    (asset?.customFields as CustomFieldValues) ?? {},
+    (source?.customFields as CustomFieldValues) ?? {},
   );
-  const [icon, setIcon] = useState<string | null>(null);
-  const [iconColor, setIconColor] = useState<string | null>(null);
-  const [pictureId, setPictureId] = useState<string | null>(null);
+  const [icon, setIcon] = useState<string | null>(duplicateFrom?.icon ?? null);
+  const [iconColor, setIconColor] = useState<string | null>(duplicateFrom?.iconColor ?? null);
+  const [pictureId, setPictureId] = useState<string | null>(duplicateFrom?.primaryPictureId ?? null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -158,32 +180,36 @@ export function AssetFormDialog({
       // triggers router.refresh() *after* this dialog closes, so resetting
       // only on close would freeze the form on stale pre-save values the next
       // time it's reopened, since this component instance never remounts.
-      setName(asset?.name ?? "");
+      setName(isDuplicate && source?.name ? `Copy of ${source.name}` : (source?.name ?? ""));
       setAssetTypeId(
-        asset?.assetTypeId ??
+        source?.assetTypeId ??
           defaultAssetTypeId ??
           assetTypes.find((t) => t.name === "Generic")?.id ??
           assetTypes[0]?.id ??
           "",
       );
-      setLocationId(asset?.locationId ?? "none");
-      setAssignedToId(asset?.assignedToId ?? "none");
-      setParentAssetId(asset?.parentAssetId ?? "none");
-      setStatus(asset?.status ?? "IN_STORAGE");
-      setNotes(asset?.notes ?? "");
-      setInUseLocationNote(asset?.inUseLocationNote ?? "");
-      setPurchaseDate(toDateInput(asset?.purchaseDate));
-      setPurchasePrice(asset?.purchasePrice != null ? String(asset.purchasePrice) : "");
-      setPurchaseCurrency(asset?.purchaseCurrency ?? defaultCurrency);
-      setIsSecondHand(asset?.isSecondHand ?? false);
-      setVendor(asset?.vendor ?? "");
-      setWarrantyExpiresAt(toDateInput(asset?.warrantyExpiresAt));
-      setReplaceByAt(toDateInput(asset?.replaceByAt));
-      setTags(asset?.tags ?? []);
-      setCustomFields((asset?.customFields as CustomFieldValues) ?? {});
-      setIcon(null);
-      setIconColor(null);
-      setPictureId(null);
+      setLocationId(source?.locationId ?? "none");
+      setAssignedToId(source?.assignedToId ?? "none");
+      setParentAssetId(source?.parentAssetId ?? "none");
+      setStatus(
+        isDuplicate && source?.status === "CHECKED_OUT"
+          ? "IN_STORAGE"
+          : (source?.status ?? "IN_STORAGE"),
+      );
+      setNotes(source?.notes ?? "");
+      setInUseLocationNote(source?.inUseLocationNote ?? "");
+      setPurchaseDate(toDateInput(source?.purchaseDate));
+      setPurchasePrice(source?.purchasePrice != null ? String(source.purchasePrice) : "");
+      setPurchaseCurrency(source?.purchaseCurrency ?? defaultCurrency);
+      setIsSecondHand(source?.isSecondHand ?? false);
+      setVendor(source?.vendor ?? "");
+      setWarrantyExpiresAt(toDateInput(source?.warrantyExpiresAt));
+      setReplaceByAt(toDateInput(source?.replaceByAt));
+      setTags(source?.tags ?? []);
+      setCustomFields((source?.customFields as CustomFieldValues) ?? {});
+      setIcon(duplicateFrom?.icon ?? null);
+      setIconColor(duplicateFrom?.iconColor ?? null);
+      setPictureId(duplicateFrom?.primaryPictureId ?? null);
     }
   }
 
@@ -228,9 +254,15 @@ export function AssetFormDialog({
       <DialogTriggerButton trigger={trigger} />
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{asset?.id ? "Edit asset" : "New asset"}</DialogTitle>
+          <DialogTitle>
+            {asset?.id ? "Edit asset" : isDuplicate ? "Duplicate asset" : "New asset"}
+          </DialogTitle>
           <DialogDescription>
-            {asset?.id ? "Update this asset's details." : "Add a new asset to your inventory."}
+            {asset?.id
+              ? "Update this asset's details."
+              : isDuplicate
+                ? "Creates a brand-new asset with its own tag — review the copy before saving."
+                : "Add a new asset to your inventory."}
           </DialogDescription>
         </DialogHeader>
 

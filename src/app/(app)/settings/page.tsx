@@ -8,19 +8,25 @@ import { WebhookRowActions } from "@/components/settings/webhook-row-actions";
 import { PictureSizeControl } from "@/components/settings/picture-size-control";
 import { BackgroundShadeControl } from "@/components/settings/background-shade-control";
 import { BrandingForm } from "@/components/settings/branding-form";
+import { PublicUrlControl } from "@/components/settings/public-url-control";
 import { WorkspaceBadge } from "@/components/settings/workspace-badge";
 import { getDefaultCurrency, currencyLabel } from "@/lib/currency";
 import { DataIoCard } from "@/components/settings/data-io-card";
-import { getWorkspacePictureSize, getWorkspaceBranding } from "@/lib/actions/workspace-settings";
+import {
+  getWorkspacePictureSize,
+  getWorkspaceBranding,
+  getWorkspacePublicUrl,
+} from "@/lib/actions/workspace-settings";
 
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user.permissions.includes("settings:manage")) redirect("/dashboard");
 
-  const [webhooks, pictureSize, branding] = await Promise.all([
+  const [webhooks, pictureSize, branding, publicUrl] = await Promise.all([
     prisma.webhookEndpoint.findMany(),
     getWorkspacePictureSize(),
     getWorkspaceBranding(),
+    getWorkspacePublicUrl(),
   ]);
 
   const providers = [
@@ -66,6 +72,17 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <BackgroundShadeControl shade={branding.defaultBackgroundShade} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            Public URL <WorkspaceBadge />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PublicUrlControl publicUrl={publicUrl} />
         </CardContent>
       </Card>
 

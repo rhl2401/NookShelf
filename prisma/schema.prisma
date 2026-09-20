@@ -388,6 +388,12 @@ model WorkspaceSettings {
   // (src/lib/background-shades.ts). Individual people can override their own.
   defaultBackgroundShade String @default("cream")
 
+  // The externally-reachable base URL (e.g. "https://assets.example.com") to embed
+  // in generated QR codes and printed labels. Null falls back to the request's own
+  // origin, which is wrong behind most reverse proxies / when bound to 0.0.0.0 —
+  // see src/lib/public-url.ts.
+  publicUrl String?
+
   updatedAt   DateTime @updatedAt
 }
 

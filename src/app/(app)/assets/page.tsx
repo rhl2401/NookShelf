@@ -130,7 +130,8 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
     : assets;
 
   // Prisma's Decimal (purchasePrice) can't cross the server/client boundary —
-  // the table doesn't display it, so just leave it out of what's passed down.
+  // the table doesn't display it directly, so it's converted to a string
+  // below (only needed for the per-row Duplicate action's prefill).
   const tableAssets = sortedAssets.map((a) => ({
     id: a.id,
     assetTag: a.assetTag,
@@ -144,6 +145,30 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
     assignedTo: a.assignedTo,
     tags: a.tags,
     replaceByAt: a.replaceByAt,
+    // Prefill data for the "Duplicate" action — a full copy of this asset's
+    // fields, minus its id/assetTag so the duplicate never ties back to it.
+    duplicateData: {
+      name: a.name,
+      assetTypeId: a.assetTypeId,
+      locationId: a.locationId,
+      assignedToId: a.assignedToId,
+      parentAssetId: a.parentAssetId,
+      status: a.status,
+      notes: a.notes,
+      inUseLocationNote: a.inUseLocationNote,
+      purchaseDate: a.purchaseDate,
+      purchasePrice: a.purchasePrice?.toString() ?? null,
+      purchaseCurrency: a.purchaseCurrency,
+      isSecondHand: a.isSecondHand,
+      vendor: a.vendor,
+      warrantyExpiresAt: a.warrantyExpiresAt,
+      replaceByAt: a.replaceByAt,
+      customFields: a.customFields,
+      tags: a.tags.map((t) => t.tag.name),
+      icon: a.icon,
+      iconColor: a.iconColor,
+      primaryPictureId: a.primaryPictureId,
+    },
   }));
 
   return (
@@ -191,6 +216,13 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
         locationAncestry={locationAncestry}
         people={people}
         canManage={canManage}
+        assetTypes={assetTypes}
+        assetOptions={assetOptions}
+        defaultCurrency={getDefaultCurrency()}
+        myPictures={myPictures}
+        workspacePictures={workspacePictures}
+        tagSuggestions={allTags.map((t) => t.name)}
+        vendorSuggestions={vendors.map((a) => a.vendor).filter((v) => v != null)}
       />
     </div>
   );

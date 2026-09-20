@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateQrPng } from "@/lib/qr";
 import { assetScanPath } from "@/lib/scan-code";
+import { resolvePublicOrigin } from "@/lib/public-url";
 
 export async function GET(
   req: Request,
@@ -16,7 +17,7 @@ export async function GET(
   const asset = await prisma.asset.findUnique({ where: { id }, select: { assetTag: true } });
   if (!asset) return new Response("Not found", { status: 404 });
 
-  const origin = new URL(req.url).origin;
+  const origin = await resolvePublicOrigin(req);
   const png = await generateQrPng(`${origin}${assetScanPath(asset.assetTag)}`);
 
   return new Response(new Uint8Array(png), {
