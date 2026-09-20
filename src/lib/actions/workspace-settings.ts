@@ -69,6 +69,41 @@ export async function setWorkspaceDefaultBackgroundShade(shade: string) {
   revalidatePath("/", "layout");
 }
 
+/**
+ * The externally-reachable base URL to embed in generated QR codes / printed
+ * labels (see src/lib/public-url.ts) — null means "fall back to the request's
+ * own origin".
+ */
+export async function getWorkspacePublicUrl(): Promise<string | null> {
+  const settings = await prisma.workspaceSettings.findUnique({ where: { id: SETTINGS_ID } });
+  return settings?.publicUrl ?? null;
+}
+
+export async function setWorkspacePublicUrl(url: string | null) {
+  await requirePermission("settings:manage");
+  let normalized = url?.trim() || null;
+  if (normalized) {
+    let parsed: URL;
+    try {
+      parsed = new URL(normalized);
+    } catch {
+      throw new Error("Enter a full URL, e.g. https://assets.example.com");
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error("URL must start with http:// or https://");
+    }
+    normalized = normalized.replace(/\/+$/, "");
+  }
+
+  await prisma.workspaceSettings.upsert({
+    where: { id: SETTINGS_ID },
+    update: { publicUrl: normalized },
+    create: { id: SETTINGS_ID, publicUrl: normalized },
+  });
+
+  revalidatePath("/settings");
+}
+
 function revalidateBranding() {
   // Busts the root layout (page title) and everything under it, including
   // /login and the (app) topbar, in one call.

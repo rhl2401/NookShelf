@@ -29,6 +29,7 @@ export async function GET() {
       purchaseCurrency: a.purchaseCurrency ?? "",
       vendor: a.vendor ?? "",
       warrantyExpiresAt: a.warrantyExpiresAt ? a.warrantyExpiresAt.toISOString().slice(0, 10) : "",
+      replaceByAt: a.replaceByAt ? a.replaceByAt.toISOString().slice(0, 10) : "",
       customFields: JSON.stringify(a.customFields ?? {}),
     }),
   );

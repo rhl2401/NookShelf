@@ -5,6 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,7 @@ export function AssetsFilterBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedTags = searchParams.getAll("tags");
+  const hasReplaceBy = searchParams.get("hasReplaceBy") === "1";
   // Controlled (not defaultValue) so "Remove filters" can clear the visible
   // text immediately — a defaultValue-based input only reads the URL once,
   // on mount, so pushing a new URL alone wouldn't visually clear it.
@@ -43,7 +45,8 @@ export function AssetsFilterBar({
     Boolean(searchParams.get("type")) ||
     Boolean(searchParams.get("location")) ||
     Boolean(searchParams.get("status")) ||
-    selectedTags.length > 0;
+    selectedTags.length > 0 ||
+    hasReplaceBy;
 
   function setParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -62,9 +65,16 @@ export function AssetsFilterBar({
     router.push(`${pathname}?${params.toString()}`);
   }
 
+  function toggleHasReplaceBy(next: boolean) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next) params.set("hasReplaceBy", "1");
+    else params.delete("hasReplaceBy");
+    router.push(params.toString() ? `${pathname}?${params.toString()}` : pathname);
+  }
+
   function clearFilters() {
     const params = new URLSearchParams(searchParams.toString());
-    for (const key of ["q", "type", "location", "status", "tags"]) params.delete(key);
+    for (const key of ["q", "type", "location", "status", "tags", "hasReplaceBy"]) params.delete(key);
     router.push(params.toString() ? `${pathname}?${params.toString()}` : pathname);
     setQuery("");
   }
@@ -165,6 +175,13 @@ export function AssetsFilterBar({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+      <label className="flex items-center gap-2 text-sm font-normal text-muted-foreground">
+        <Checkbox
+          checked={hasReplaceBy}
+          onCheckedChange={(c) => toggleHasReplaceBy(c === true)}
+        />
+        Has a replace-by date
+      </label>
       {hasActiveFilters && (
         <Button variant="ghost" size="sm" onClick={clearFilters}>
           <X className="size-3.5" /> Remove filters

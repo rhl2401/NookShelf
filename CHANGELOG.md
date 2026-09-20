@@ -8,6 +8,25 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.16.0
+
+- Assets can now be duplicated from the Assets list (per-row action) or an asset's own page —
+  opens the same New/Edit modal prefilled from the source asset, so you can tweak anything before
+  saving. The duplicate always gets its own id and asset tag; it never shares identity with the
+  original, and a duplicated checked-out asset resets to "In storage" since there's no checkout
+  record for the new one.
+- Assets now track an optional "Replace by" date, for things that should be replaced after a fixed
+  time regardless of condition (a climbing harness, a smoke detector, a battery) — separate from
+  the Retired status. Editable on the asset form (with the same date presets as Warranty expires),
+  shown on the asset detail page, sortable/filterable in the Assets table, included in CSV/XLSX/JSON
+  import-export, and surfaced on the Dashboard in a new "Replacements due soon" card.
+- Fixed QR codes/printed labels linking to `0.0.0.0` (or another internal address) instead of the
+  workspace's real domain when running behind a reverse proxy or in some container setups. Added a
+  **Public URL** workspace setting (Settings → Public URL) that QR/label generation now prefers;
+  leave it blank to keep using the incoming request's own origin.
+- No breaking changes. New nullable columns only (`Asset.replaceByAt`, `WorkspaceSettings.publicUrl`)
+  — no manual steps.
+
 ## 1.15.0
 
 - Asset pictures/icons in the Assets table are now 1.5x larger (32px → 48px) — the thumbnails

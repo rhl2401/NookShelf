@@ -257,6 +257,10 @@ model Asset {
   isSecondHand      Boolean   @default(false) // purchaseDate/purchasePrice already cover what/when — this just flags the source
   vendor            String?
   warrantyExpiresAt DateTime?
+  // Expected lifespan — for items that should be replaced after a fixed time
+  // regardless of condition (climbing harness, smoke detector, battery),
+  // deliberately distinct from AssetStatus.RETIRED / the "Retire" bulk action.
+  replaceByAt       DateTime?
 
   // Picture: a picture from the reusable library takes precedence over an
   // icon override, which takes precedence over the asset type's default icon.
@@ -383,6 +387,12 @@ model WorkspaceSettings {
   // Workspace-wide default for Person.backgroundShade — one of BackgroundShadeKey
   // (src/lib/background-shades.ts). Individual people can override their own.
   defaultBackgroundShade String @default("cream")
+
+  // The externally-reachable base URL (e.g. "https://assets.example.com") to embed
+  // in generated QR codes and printed labels. Null falls back to the request's own
+  // origin, which is wrong behind most reverse proxies / when bound to 0.0.0.0 —
+  // see src/lib/public-url.ts.
+  publicUrl String?
 
   updatedAt   DateTime @updatedAt
 }

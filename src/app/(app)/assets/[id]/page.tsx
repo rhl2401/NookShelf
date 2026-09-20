@@ -171,8 +171,43 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                     isSecondHand: asset.isSecondHand,
                     vendor: asset.vendor,
                     warrantyExpiresAt: asset.warrantyExpiresAt,
+                    replaceByAt: asset.replaceByAt,
                     customFields: asset.customFields,
                     tags: asset.tags.map((t) => t.tag.name),
+                  }}
+                />
+                <AssetFormDialog
+                  trigger={<Button variant="outline">Duplicate</Button>}
+                  assetTypes={assetTypes}
+                  flatLocations={flatLocations}
+                  people={people}
+                  assetOptions={allAssets}
+                  defaultCurrency={defaultCurrency}
+                  myPictures={myPictures}
+                  workspacePictures={workspacePictures}
+                  tagSuggestions={allTags.map((t) => t.name)}
+                  vendorSuggestions={vendors.map((a) => a.vendor).filter((v) => v != null)}
+                  duplicateFrom={{
+                    name: asset.name,
+                    assetTypeId: asset.assetTypeId,
+                    locationId: asset.locationId,
+                    assignedToId: asset.assignedToId,
+                    parentAssetId: asset.parentAssetId,
+                    status: asset.status,
+                    notes: asset.notes,
+                    inUseLocationNote: asset.inUseLocationNote,
+                    purchaseDate: asset.purchaseDate,
+                    purchasePrice: asset.purchasePrice?.toString() ?? null,
+                    purchaseCurrency: asset.purchaseCurrency,
+                    isSecondHand: asset.isSecondHand,
+                    vendor: asset.vendor,
+                    warrantyExpiresAt: asset.warrantyExpiresAt,
+                    replaceByAt: asset.replaceByAt,
+                    customFields: asset.customFields,
+                    tags: asset.tags.map((t) => t.tag.name),
+                    icon: asset.icon,
+                    iconColor: asset.iconColor,
+                    primaryPictureId: asset.primaryPictureId,
                   }}
                 />
                 <DeleteAssetButton assetId={asset.id} />
@@ -246,6 +281,9 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
             <Row label="Vendor">{asset.vendor ?? "—"}</Row>
             <Row label="Warranty">
               {asset.warrantyExpiresAt ? asset.warrantyExpiresAt.toLocaleDateString() : "—"}
+            </Row>
+            <Row label="Replace by">
+              {asset.replaceByAt ? asset.replaceByAt.toLocaleDateString() : "—"}
             </Row>
             {asset.notes && <Row label="Notes">{asset.notes}</Row>}
             <Row label="Tags">

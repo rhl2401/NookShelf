@@ -19,6 +19,7 @@ export default async function DashboardPage() {
     checkedOutCount,
     overdueCheckouts,
     warrantyExpiring,
+    replacementsDue,
     consumablesWithThreshold,
     locationTree,
   ] = await Promise.all([
@@ -33,6 +34,13 @@ export default async function DashboardPage() {
     prisma.asset.findMany({
       where: { warrantyExpiresAt: { gte: now, lte: warrantyHorizon } },
       orderBy: { warrantyExpiresAt: "asc" },
+      take: 10,
+    }),
+    // No `gte: now` floor — a replace-by date that's already slipped past is
+    // more important to keep visible than a lapsed warranty, not less.
+    prisma.asset.findMany({
+      where: { replaceByAt: { lte: warrantyHorizon } },
+      orderBy: { replaceByAt: "asc" },
       take: 10,
     }),
     canViewConsumables
@@ -123,6 +131,25 @@ export default async function DashboardPage() {
                 <p className="font-medium">{a.name}</p>
                 <Badge variant="outline">
                   {a.warrantyExpiresAt?.toLocaleDateString()}
+                </Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Replacements due soon</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {replacementsDue.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nothing due to be replaced soon.</p>
+            )}
+            {replacementsDue.map((a) => (
+              <div key={a.id} className="flex items-center justify-between text-sm">
+                <p className="font-medium">{a.name}</p>
+                <Badge variant={a.replaceByAt && a.replaceByAt < now ? "destructive" : "outline"}>
+                  {a.replaceByAt?.toLocaleDateString()}
                 </Badge>
               </div>
             ))}
