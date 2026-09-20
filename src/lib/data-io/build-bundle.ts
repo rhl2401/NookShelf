@@ -75,6 +75,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
       isSecondHand: a.isSecondHand,
       vendor: a.vendor,
       warrantyExpiresAt: a.warrantyExpiresAt ? a.warrantyExpiresAt.toISOString().slice(0, 10) : null,
+      replaceByAt: a.replaceByAt ? a.replaceByAt.toISOString().slice(0, 10) : null,
       tags: a.tags.map((t) => t.tag.name),
       customFields: (a.customFields as Record<string, unknown>) ?? {},
     })),

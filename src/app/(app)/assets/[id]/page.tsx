@@ -171,6 +171,7 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
                     isSecondHand: asset.isSecondHand,
                     vendor: asset.vendor,
                     warrantyExpiresAt: asset.warrantyExpiresAt,
+                    replaceByAt: asset.replaceByAt,
                     customFields: asset.customFields,
                     tags: asset.tags.map((t) => t.tag.name),
                   }}
@@ -246,6 +247,9 @@ export default async function AssetDetailPage({ params }: PageProps<"/assets/[id
             <Row label="Vendor">{asset.vendor ?? "—"}</Row>
             <Row label="Warranty">
               {asset.warrantyExpiresAt ? asset.warrantyExpiresAt.toLocaleDateString() : "—"}
+            </Row>
+            <Row label="Replace by">
+              {asset.replaceByAt ? asset.replaceByAt.toLocaleDateString() : "—"}
             </Row>
             {asset.notes && <Row label="Notes">{asset.notes}</Row>}
             <Row label="Tags">

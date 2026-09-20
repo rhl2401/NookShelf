@@ -27,6 +27,7 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
   const locationFilter = typeof sp.location === "string" ? sp.location : undefined;
   const statusFilter = typeof sp.status === "string" ? sp.status : undefined;
   const tagsFilter = Array.isArray(sp.tags) ? sp.tags : typeof sp.tags === "string" ? [sp.tags] : [];
+  const hasReplaceBy = sp.hasReplaceBy === "1";
   const sortColumn = typeof sp.sort === "string" ? sp.sort : undefined;
   const sortDir: "asc" | "desc" = sp.dir === "desc" ? "desc" : "asc";
 
@@ -47,6 +48,7 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
   if (tagsFilter.length > 0) {
     where.tags = { some: { tag: { name: { in: tagsFilter } } } };
   }
+  if (hasReplaceBy) where.replaceByAt = { not: null };
 
   // Tags are multi-valued (many-to-many), so Prisma can't order by them
   // directly — fetch a generously large window and sort by each asset's
@@ -66,7 +68,9 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
               ? { assignedTo: { name: sortDir } }
               : sortColumn === "status"
                 ? { status: sortDir }
-                : { createdAt: "desc" };
+                : sortColumn === "replaceBy"
+                  ? { replaceByAt: sortDir }
+                  : { createdAt: "desc" };
 
   const [assets, assetTypes, tree, people, allTags, vendors, myPictures, workspacePictures] =
     await Promise.all([
@@ -139,6 +143,7 @@ export default async function AssetsPage({ searchParams }: PageProps<"/assets">)
     location: a.location,
     assignedTo: a.assignedTo,
     tags: a.tags,
+    replaceByAt: a.replaceByAt,
   }));
 
   return (

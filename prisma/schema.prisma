@@ -257,6 +257,10 @@ model Asset {
   isSecondHand      Boolean   @default(false) // purchaseDate/purchasePrice already cover what/when — this just flags the source
   vendor            String?
   warrantyExpiresAt DateTime?
+  // Expected lifespan — for items that should be replaced after a fixed time
+  // regardless of condition (climbing harness, smoke detector, battery),
+  // deliberately distinct from AssetStatus.RETIRED / the "Retire" bulk action.
+  replaceByAt       DateTime?
 
   // Picture: a picture from the reusable library takes precedence over an
   // icon override, which takes precedence over the asset type's default icon.

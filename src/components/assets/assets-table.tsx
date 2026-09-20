@@ -47,6 +47,7 @@ type AssetRow = {
   location: { id: string; name: string } | null;
   assignedTo: { id: string; name: string } | null;
   tags: Array<{ tag: { name: string } }>;
+  replaceByAt: Date | null;
 };
 
 export function AssetsTable({
@@ -248,6 +249,9 @@ export function AssetsTable({
               <SortableHead column="tags" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
                 Tags
               </SortableHead>
+              <SortableHead column="replaceBy" currentSort={currentSort} currentDir={currentDir} onSort={toggleSort}>
+                Replace by
+              </SortableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -307,11 +311,14 @@ export function AssetsTable({
                     ))}
                   </div>
                 </TableCell>
+                <TableCell>
+                  {asset.replaceByAt ? asset.replaceByAt.toLocaleDateString() : "—"}
+                </TableCell>
               </TableRow>
             ))}
             {assets.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                   No assets match these filters.
                 </TableCell>
               </TableRow>

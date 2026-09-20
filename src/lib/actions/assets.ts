@@ -26,6 +26,7 @@ const assetSchema = z.object({
   isSecondHand: z.boolean().optional(),
   vendor: z.string().max(160).optional(),
   warrantyExpiresAt: z.string().optional(),
+  replaceByAt: z.string().optional(),
   tags: z.array(z.string().min(1).max(40)).optional(),
   customFields: z.record(z.string(), z.unknown()).optional(),
 });
@@ -126,6 +127,7 @@ export async function createAsset(input: CreateAssetInput) {
             isSecondHand: data.isSecondHand ?? false,
             vendor: data.vendor || null,
             warrantyExpiresAt: data.warrantyExpiresAt ? new Date(data.warrantyExpiresAt) : null,
+            replaceByAt: data.replaceByAt ? new Date(data.replaceByAt) : null,
             customFields: customFields as Prisma.InputJsonValue,
             tags: { create: tagIds.map((tagId) => ({ tagId })) },
           },
@@ -189,6 +191,7 @@ export async function updateAsset(assetId: string, input: AssetInput) {
         isSecondHand: data.isSecondHand ?? false,
         vendor: data.vendor || null,
         warrantyExpiresAt: data.warrantyExpiresAt ? new Date(data.warrantyExpiresAt) : null,
+        replaceByAt: data.replaceByAt ? new Date(data.replaceByAt) : null,
         customFields: customFields as Prisma.InputJsonValue,
         tags: { create: tagIds.map((tagId) => ({ tagId })) },
       },

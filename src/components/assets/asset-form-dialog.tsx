@@ -45,6 +45,17 @@ const WARRANTY_PRESETS: Array<{ label: string; addToDate: (d: Date) => Date }> =
   { label: "3 years", addToDate: (d) => addYears(d, 3) },
 ];
 
+const REPLACE_BY_PRESETS: Array<{ label: string; addToDate: (d: Date) => Date }> = [
+  { label: "1 month", addToDate: (d) => addMonths(d, 1) },
+  { label: "3 months", addToDate: (d) => addMonths(d, 3) },
+  { label: "6 months", addToDate: (d) => addMonths(d, 6) },
+  { label: "1 year", addToDate: (d) => addYears(d, 1) },
+  { label: "2 years", addToDate: (d) => addYears(d, 2) },
+  { label: "3 years", addToDate: (d) => addYears(d, 3) },
+  { label: "5 years", addToDate: (d) => addYears(d, 5) },
+  { label: "10 years", addToDate: (d) => addYears(d, 10) },
+];
+
 type AssetTypeOption = { id: string; name: string; fieldSchema: unknown };
 type LocationOption = { id: string; label: string };
 type PersonOption = { id: string; name: string };
@@ -91,6 +102,7 @@ export function AssetFormDialog({
     isSecondHand?: boolean;
     vendor: string | null;
     warrantyExpiresAt: Date | string | null;
+    replaceByAt: Date | string | null;
     customFields: unknown;
     tags?: string[];
   };
@@ -122,6 +134,7 @@ export function AssetFormDialog({
   const [warrantyExpiresAt, setWarrantyExpiresAt] = useState(
     toDateInput(asset?.warrantyExpiresAt),
   );
+  const [replaceByAt, setReplaceByAt] = useState(toDateInput(asset?.replaceByAt));
   const [tags, setTags] = useState<string[]>(asset?.tags ?? []);
   const [customFields, setCustomFields] = useState<CustomFieldValues>(
     (asset?.customFields as CustomFieldValues) ?? {},
@@ -139,7 +152,12 @@ export function AssetFormDialog({
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (!next) {
+    {
+      // Re-sync every field from the current `asset` prop whenever the dialog
+      // toggles (both opening and closing) — not just on close. A save
+      // triggers router.refresh() *after* this dialog closes, so resetting
+      // only on close would freeze the form on stale pre-save values the next
+      // time it's reopened, since this component instance never remounts.
       setName(asset?.name ?? "");
       setAssetTypeId(
         asset?.assetTypeId ??
@@ -160,6 +178,7 @@ export function AssetFormDialog({
       setIsSecondHand(asset?.isSecondHand ?? false);
       setVendor(asset?.vendor ?? "");
       setWarrantyExpiresAt(toDateInput(asset?.warrantyExpiresAt));
+      setReplaceByAt(toDateInput(asset?.replaceByAt));
       setTags(asset?.tags ?? []);
       setCustomFields((asset?.customFields as CustomFieldValues) ?? {});
       setIcon(null);
@@ -186,6 +205,7 @@ export function AssetFormDialog({
           isSecondHand,
           vendor,
           warrantyExpiresAt: warrantyExpiresAt || undefined,
+          replaceByAt: replaceByAt || undefined,
           tags,
           customFields,
         };
@@ -215,221 +235,264 @@ export function AssetFormDialog({
         </DialogHeader>
 
         <div className="flex max-h-[65vh] flex-col gap-4 overflow-y-auto pr-1">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2 grid gap-1.5">
-              <Label>Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-
-            {!asset?.id && (
+          <div className="grid gap-3">
+            <p className="text-sm font-medium">Basic info</p>
+            <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2 grid gap-1.5">
-                <Label>Icon / picture</Label>
-                <PictureIconEditor
-                  name={name || "Asset"}
-                  icon={icon}
-                  onIconChange={setIcon}
-                  color={iconColor}
-                  onColorChange={setIconColor}
-                  pictureId={pictureId}
-                  onPictureChange={setPictureId}
-                  myPictures={myPictures}
-                  workspacePictures={workspacePictures}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Once created, change the photo or icon from the asset&apos;s own page.
-                </p>
+                <Label>Name</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
-            )}
 
-            <div className="grid gap-1.5">
-              <Label>Asset type</Label>
-              <Select value={assetTypeId} onValueChange={(v) => v && setAssetTypeId(v)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue>
-                    {(v: string) => assetTypes.find((t) => t.id === v)?.name}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {assetTypes.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {!asset?.id && (
+                <div className="col-span-2 grid gap-1.5">
+                  <Label>Icon / picture</Label>
+                  <PictureIconEditor
+                    name={name || "Asset"}
+                    icon={icon}
+                    onIconChange={setIcon}
+                    color={iconColor}
+                    onColorChange={setIconColor}
+                    pictureId={pictureId}
+                    onPictureChange={setPictureId}
+                    myPictures={myPictures}
+                    workspacePictures={workspacePictures}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Once created, change the photo or icon from the asset&apos;s own page.
+                  </p>
+                </div>
+              )}
 
-            <div className="grid gap-1.5">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => v && setStatus(v)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue>
-                    {(v: string) => ASSET_STATUSES.find((s) => s.value === v)?.label}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {ASSET_STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {status === "IN_USE" && (
-              <div className="col-span-2 grid gap-1.5">
-                <Label>Where is it?</Label>
-                <Input
-                  value={inUseLocationNote}
-                  onChange={(e) => setInUseLocationNote(e.target.value)}
-                  placeholder="e.g. Front desk, Conference room B"
-                />
-              </div>
-            )}
-
-            <div className="grid gap-1.5">
-              <Label>Location</Label>
-              <Select value={locationId ?? "none"} onValueChange={(v) => setLocationId(v ?? "none")}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="No location">
-                    {(v: string) =>
-                      v === "none" ? "No location" : flatLocations.find((l) => l.id === v)?.label
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No location</SelectItem>
-                  {flatLocations.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {l.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label>Assigned to</Label>
-              <Select
-                value={assignedToId ?? "none"}
-                onValueChange={(v) => setAssignedToId(v ?? "none")}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Unassigned">
-                    {(v: string) =>
-                      v === "none" ? "Unassigned" : people.find((p) => p.id === v)?.name
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Unassigned</SelectItem>
-                  {people.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Sets ownership only — it doesn&apos;t create a checkout or due date. Use Check out
-                for that.
-              </p>
-            </div>
-
-            <div className="col-span-2 grid gap-1.5">
-              <Label>Part of (parent asset)</Label>
-              <AssetCombobox
-                value={parentAssetId ?? "none"}
-                onChange={setParentAssetId}
-                options={assetOptions.filter((a) => a.id !== asset?.id)}
-              />
-            </div>
-
-            <div className="grid gap-1.5">
-              <Label>Purchase date</Label>
-              <Input
-                type="date"
-                value={purchaseDate}
-                onChange={(e) => setPurchaseDate(e.target.value)}
-              />
-            </div>
-            <div className="flex items-end pb-1.5">
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={isSecondHand}
-                  onCheckedChange={(c) => setIsSecondHand(c === true)}
-                />
-                Bought second-hand
-              </label>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Purchase price</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  className="flex-1"
-                  value={purchasePrice}
-                  onChange={(e) => setPurchasePrice(e.target.value)}
-                />
-                <Select value={purchaseCurrency} onValueChange={(v) => v && setPurchaseCurrency(v)}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
+              <div className="grid gap-1.5">
+                <Label>Asset type</Label>
+                <Select value={assetTypeId} onValueChange={(v) => v && setAssetTypeId(v)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {(v: string) => assetTypes.find((t) => t.id === v)?.name}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.code}
+                    {assetTypes.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Vendor</Label>
-              <SuggestInput value={vendor} onChange={setVendor} suggestions={vendorSuggestions} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Warranty expires</Label>
-              <Input
-                type="date"
-                value={warrantyExpiresAt}
-                onChange={(e) => setWarrantyExpiresAt(e.target.value)}
-              />
-              <div className="flex flex-wrap gap-1">
-                {WARRANTY_PRESETS.map((preset) => (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    disabled={!purchaseDate}
-                    onClick={() =>
-                      setWarrantyExpiresAt(
-                        format(preset.addToDate(parseISO(purchaseDate)), "yyyy-MM-dd"),
-                      )
-                    }
-                    className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
-                    title={purchaseDate ? undefined : "Set a purchase date first"}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
+
+              <div className="grid gap-1.5">
+                <Label>Status</Label>
+                <Select value={status} onValueChange={(v) => v && setStatus(v)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {(v: string) => ASSET_STATUSES.find((s) => s.value === v)?.label}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ASSET_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {status === "IN_USE" && (
+                <div className="col-span-2 grid gap-1.5">
+                  <Label>Where is it?</Label>
+                  <Input
+                    value={inUseLocationNote}
+                    onChange={(e) => setInUseLocationNote(e.target.value)}
+                    placeholder="e.g. Front desk, Conference room B"
+                  />
+                </div>
+              )}
+
+              <div className="grid gap-1.5">
+                <Label>Location</Label>
+                <Select value={locationId ?? "none"} onValueChange={(v) => setLocationId(v ?? "none")}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="No location">
+                      {(v: string) =>
+                        v === "none" ? "No location" : flatLocations.find((l) => l.id === v)?.label
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No location</SelectItem>
+                    {flatLocations.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-1.5">
+                <Label>Assigned to</Label>
+                <Select
+                  value={assignedToId ?? "none"}
+                  onValueChange={(v) => setAssignedToId(v ?? "none")}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Unassigned">
+                      {(v: string) =>
+                        v === "none" ? "Unassigned" : people.find((p) => p.id === v)?.name
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Unassigned</SelectItem>
+                    {people.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Sets ownership only — it doesn&apos;t create a checkout or due date. Use Check out
+                  for that.
+                </p>
+              </div>
+
+              <div className="col-span-2 grid gap-1.5">
+                <Label>Part of (parent asset)</Label>
+                <AssetCombobox
+                  value={parentAssetId ?? "none"}
+                  onChange={setParentAssetId}
+                  options={assetOptions.filter((a) => a.id !== asset?.id)}
+                />
               </div>
             </div>
+          </div>
 
-            <div className="col-span-2 grid gap-1.5">
-              <Label>Tags</Label>
-              <TagsInput
-                value={tags}
-                onChange={setTags}
-                placeholder="Type a tag, then comma or enter"
-                suggestions={tagSuggestions}
-              />
+          <div className="grid gap-3 border-t pt-3">
+            <p className="text-sm font-medium">Purchase &amp; warranty</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label>Purchase date</Label>
+                <Input
+                  type="date"
+                  value={purchaseDate}
+                  onChange={(e) => setPurchaseDate(e.target.value)}
+                />
+              </div>
+              <div className="flex items-end pb-1.5">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={isSecondHand}
+                    onCheckedChange={(c) => setIsSecondHand(c === true)}
+                  />
+                  Bought second-hand
+                </label>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Purchase price</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    className="flex-1"
+                    value={purchasePrice}
+                    onChange={(e) => setPurchasePrice(e.target.value)}
+                  />
+                  <Select value={purchaseCurrency} onValueChange={(v) => v && setPurchaseCurrency(v)}>
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.code}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Vendor</Label>
+                <SuggestInput value={vendor} onChange={setVendor} suggestions={vendorSuggestions} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Warranty expires</Label>
+                <Input
+                  type="date"
+                  value={warrantyExpiresAt}
+                  onChange={(e) => setWarrantyExpiresAt(e.target.value)}
+                />
+                <div className="flex flex-wrap gap-1">
+                  {WARRANTY_PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      disabled={!purchaseDate}
+                      onClick={() =>
+                        setWarrantyExpiresAt(
+                          format(preset.addToDate(parseISO(purchaseDate)), "yyyy-MM-dd"),
+                        )
+                      }
+                      className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+                      title={purchaseDate ? undefined : "Set a purchase date first"}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Replace by</Label>
+                <Input
+                  type="date"
+                  value={replaceByAt}
+                  onChange={(e) => setReplaceByAt(e.target.value)}
+                />
+                <div className="flex flex-wrap gap-1">
+                  {REPLACE_BY_PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      disabled={!purchaseDate}
+                      onClick={() =>
+                        setReplaceByAt(
+                          format(preset.addToDate(parseISO(purchaseDate)), "yyyy-MM-dd"),
+                        )
+                      }
+                      className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+                      title={purchaseDate ? undefined : "Set a purchase date first"}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Optional — for things that should be replaced after a fixed time regardless of
+                  wear, like a climbing harness or a battery.
+                </p>
+              </div>
             </div>
+          </div>
 
-            <div className="col-span-2 grid gap-1.5">
-              <Label>Notes</Label>
-              <Textarea value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} rows={2} />
+          <div className="grid gap-3 border-t pt-3">
+            <p className="text-sm font-medium">Organization</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 grid gap-1.5">
+                <Label>Tags</Label>
+                <TagsInput
+                  value={tags}
+                  onChange={setTags}
+                  placeholder="Type a tag, then comma or enter"
+                  suggestions={tagSuggestions}
+                />
+              </div>
+
+              <div className="col-span-2 grid gap-1.5">
+                <Label>Notes</Label>
+                <Textarea value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} rows={2} />
+              </div>
             </div>
           </div>
 
