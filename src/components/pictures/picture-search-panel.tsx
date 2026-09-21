@@ -6,7 +6,11 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PictureRow, type PictureRef } from "@/components/pictures/picture-row";
-import { uploadPicture, uploadPictureFromUrl, searchPictures } from "@/lib/actions/pictures";
+import { searchPictures } from "@/lib/actions/pictures";
+import {
+  PictureUploadPreviewDialog,
+  type PictureUploadSource,
+} from "@/components/pictures/picture-upload-preview-dialog";
 
 /**
  * Upload-new + search-across-your-and-workspace-pictures body, shared by the
@@ -27,9 +31,8 @@ export function PictureSearchPanel({
   disabled?: boolean;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, startUpload] = useTransition();
+  const [pendingSource, setPendingSource] = useState<PictureUploadSource | null>(null);
   const [urlDraft, setUrlDraft] = useState("");
-  const [addingFromUrl, startAddFromUrl] = useTransition();
   const [query, setQuery] = useState("");
   const [searching, startSearchTransition] = useTransition();
   const [results, setResults] = useState<{ mine: PictureRef[]; workspace: PictureRef[] } | null>(
@@ -60,36 +63,22 @@ export function PictureSearchPanel({
 
   function onFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (!file) return;
-    const formData = new FormData();
-    formData.set("file", file);
-    startUpload(async () => {
-      try {
-        const picture = await uploadPicture(formData, "PERSONAL");
-        onSelect(picture.id);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Upload failed");
-      } finally {
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
-    });
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
+    setPendingSource({ kind: "file", file });
   }
 
   function addFromUrl() {
     const url = urlDraft.trim();
     if (!url) return;
-    startAddFromUrl(async () => {
-      try {
-        const picture = await uploadPictureFromUrl(url, "PERSONAL");
-        onSelect(picture.id);
-        setUrlDraft("");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Couldn't add that image");
-      }
-    });
+    setPendingSource({ kind: "url", url });
   }
 
-  const busy = disabled || uploading || addingFromUrl;
+  const busy = disabled || pendingSource !== null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -147,6 +136,17 @@ export function PictureSearchPanel({
           <PictureRow label="Workspace" pictures={shownWorkspace} onPick={onSelect} disabled={busy} />
         </>
       )}
+
+      <PictureUploadPreviewDialog
+        source={pendingSource}
+        scope="PERSONAL"
+        onClose={() => setPendingSource(null)}
+        onUploaded={(picture) => {
+          onSelect(picture.id);
+          setUrlDraft("");
+          setPendingSource(null);
+        }}
+      />
     </div>
   );
 }

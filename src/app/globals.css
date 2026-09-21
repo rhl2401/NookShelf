@@ -140,3 +140,19 @@
     @apply cursor-pointer;
   }
 }
+
+/*
+ * Checkerboard pattern for previewing images with transparency — the app's
+ * own background is too close to white/near-white to tell a transparent
+ * region apart from an opaque one otherwise. Used by the background-removal
+ * preview dialogs.
+ */
+.bg-transparency-grid {
+  background-image:
+    linear-gradient(45deg, var(--border) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--border) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--border) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--border) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+}

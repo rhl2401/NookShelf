@@ -30,7 +30,11 @@ export default async function PicturesPage({ searchParams }: PageProps<"/picture
       : Promise.resolve(0),
     prisma.picture.findMany({
       where: { scope: "WORKSPACE", ...nameFilter },
-      include: { owner: true, _count: { select: { assets: true } } },
+      include: {
+        owner: true,
+        _count: { select: { assets: true } },
+        assets: { select: { assignedToId: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: PAGE_SIZE,
     }),
@@ -60,6 +64,12 @@ export default async function PicturesPage({ searchParams }: PageProps<"/picture
           name: p.name,
           usedCount: p._count.assets,
           ownerName: p.owner?.name ?? null,
+          // Unsharing is allowed even with assets still using the picture, as
+          // long as every one of them is assigned to the picture's own owner
+          // — nobody else's asset would be affected by pulling it back to
+          // personal. assignedToId is this app's "who has it" field (see
+          // Asset.assignedToId), deliberately lighter-weight than Checkout.
+          canUnshare: p.assets.every((a) => a.assignedToId === p.ownerId),
         }))}
         workspaceTotal={workspaceTotal}
         canShare={canShare}

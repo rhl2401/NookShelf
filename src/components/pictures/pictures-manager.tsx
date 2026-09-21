@@ -3,23 +3,33 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Upload, Trash2, Share2, Undo2, Sparkles, Pencil, Search, Users } from "lucide-react";
+import { Upload, Trash2, Share2, Undo2, Sparkles, Pencil, Search, Users, Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  uploadPicture,
   deletePicture,
   shareToWorkspace,
   unshareFromWorkspace,
   renamePicture,
   flushUnusedPictures,
 } from "@/lib/actions/pictures";
+import {
+  PictureUploadPreviewDialog,
+  type PictureUploadSource,
+} from "@/components/pictures/picture-upload-preview-dialog";
+import { PictureBackgroundRemovalDialog } from "@/components/pictures/picture-background-removal-dialog";
 import { cn } from "@/lib/utils";
 
 type PictureScope = "PERSONAL" | "WORKSPACE";
 
-type PictureItem = { id: string; name: string | null; usedCount: number; ownerName?: string | null };
+type PictureItem = {
+  id: string;
+  name: string | null;
+  usedCount: number;
+  ownerName?: string | null;
+  canUnshare?: boolean;
+};
 
 export function PicturesManager({
   myPictures,
@@ -43,6 +53,11 @@ export function PicturesManager({
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const unusedCount = myPictures.filter((p) => p.usedCount === 0).length;
+  const [pendingSource, setPendingSource] = useState<PictureUploadSource | null>(null);
+  const [pendingScope, setPendingScope] = useState<PictureScope>("PERSONAL");
+  const [pendingBgPicture, setPendingBgPicture] = useState<{ id: string; name: string | null } | null>(
+    null,
+  );
 
   // Tracks nested dragenter/dragleave pairs (they fire for every descendant
   // element the cursor passes over) so the overlay only hides once the drag
@@ -68,17 +83,8 @@ export function PicturesManager({
       toast.error("Please choose an image file.");
       return;
     }
-    const formData = new FormData();
-    formData.set("file", file);
-    startTransition(async () => {
-      try {
-        await uploadPicture(formData, scope);
-        toast.success(scope === "WORKSPACE" ? "Picture added to workspace" : "Picture added");
-        router.refresh();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Upload failed");
-      }
-    });
+    setPendingScope(scope);
+    setPendingSource({ kind: "file", file });
   }
 
   function onFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
@@ -282,6 +288,7 @@ export function PicturesManager({
                   onDelete={() => onDelete(p)}
                   onShare={canShare ? () => onShare(p.id) : undefined}
                   onRename={(name) => onRename(p.id, name)}
+                  onRemoveBg={() => setPendingBgPicture({ id: p.id, name: p.name })}
                 />
               ))}
             </div>
@@ -311,8 +318,11 @@ export function PicturesManager({
                   picture={p}
                   isPending={isPending}
                   onDelete={canShare ? () => onDelete(p) : undefined}
-                  onUnshare={canShare && p.usedCount === 0 ? () => onUnshare(p.id) : undefined}
+                  onUnshare={canShare && p.canUnshare ? () => onUnshare(p.id) : undefined}
                   onRename={canShare ? (name) => onRename(p.id, name) : undefined}
+                  onRemoveBg={
+                    canShare ? () => setPendingBgPicture({ id: p.id, name: p.name }) : undefined
+                  }
                 />
               ))}
             </div>
@@ -325,6 +335,23 @@ export function PicturesManager({
           </>
         )}
       </section>
+
+      <PictureUploadPreviewDialog
+        source={pendingSource}
+        scope={pendingScope}
+        onClose={() => setPendingSource(null)}
+        onUploaded={() => {
+          toast.success(pendingScope === "WORKSPACE" ? "Picture added to workspace" : "Picture added");
+          setPendingSource(null);
+          router.refresh();
+        }}
+      />
+
+      <PictureBackgroundRemovalDialog
+        picture={pendingBgPicture}
+        onClose={() => setPendingBgPicture(null)}
+        onApplied={() => router.refresh()}
+      />
     </div>
   );
 }
@@ -336,12 +363,14 @@ function PictureCard({
   onShare,
   onUnshare,
   onRename,
+  onRemoveBg,
 }: {
   picture: PictureItem;
   isPending: boolean;
   onDelete?: () => void;
   onShare?: () => void;
   onUnshare?: () => void;
+  onRemoveBg?: () => void;
   onRename?: (name: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -403,6 +432,18 @@ function PictureCard({
             )}
           </div>
           <div className="flex shrink-0 gap-0.5">
+            {onRemoveBg && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-6"
+                title="Remove background"
+                onClick={onRemoveBg}
+                disabled={isPending}
+              >
+                <Eraser className="size-3.5" />
+              </Button>
+            )}
             {onShare && (
               <Button
                 size="icon"
