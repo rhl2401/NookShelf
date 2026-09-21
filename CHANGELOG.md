@@ -8,6 +8,21 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.17.0
+
+- Added optional background removal for the picture library. Picking a new picture (a file or a
+  pasted URL) now shows a compare-and-choose preview — original vs. background-removed — before
+  it's saved, so it can be skipped per image if it doesn't look good on a particular photo.
+  Existing library pictures can be edited the same way from the Pictures page. By default this
+  runs a fast in-process near-white removal with no external calls; a remove.bg API key can
+  optionally be configured instead (Settings → Background removal) for photos on non-white
+  backgrounds.
+- A workspace picture can now be unshared back to personal even while still in use by some
+  assets, as long as every one of them is assigned to the picture's own owner — previously any
+  usage at all blocked it.
+- No breaking changes. New nullable/defaulted columns only (`WorkspaceSettings.bgRemovalProvider`,
+  `WorkspaceSettings.bgRemovalApiKey`, `Picture.updatedAt`) — no manual steps.
+
 ## 1.16.0
 
 - Assets can now be duplicated from the Assets list (per-row action) or an asset's own page —
