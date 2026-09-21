@@ -357,6 +357,11 @@ model Picture {
   consumables Consumable[]
 
   createdAt DateTime @default(now())
+  // Bumped on every edit, including in-place ones like background removal
+  // that keep the same id/path shape but change the underlying file —
+  // appended as a cache-busting ?v= query param wherever the picture is
+  // rendered, since its serving URL is otherwise stable forever.
+  updatedAt DateTime @updatedAt
 
   @@index([ownerId])
   @@index([scope])
@@ -393,6 +398,13 @@ model WorkspaceSettings {
   // origin, which is wrong behind most reverse proxies / when bound to 0.0.0.0 —
   // see src/lib/public-url.ts.
   publicUrl String?
+
+  // Background removal for picture uploads (Settings → Background removal,
+  // settings:manage). "local" (default) runs a fast in-process near-white
+  // flood-fill — see src/lib/background-removal.ts. Any other value names a
+  // remote provider called with bgRemovalApiKey instead.
+  bgRemovalProvider String  @default("local")
+  bgRemovalApiKey   String?
 
   updatedAt   DateTime @updatedAt
 }

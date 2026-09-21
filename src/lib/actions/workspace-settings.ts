@@ -8,6 +8,7 @@ import { processLogoUpload } from "@/lib/image-processing";
 import { saveLogoFile, deleteStoredFile } from "@/lib/storage";
 import { isValidHexColor } from "@/lib/color-shared";
 import { DEFAULT_BACKGROUND_SHADE, isBackgroundShadeKey } from "@/lib/background-shades";
+import { isBgRemovalProvider, type BgRemovalProvider } from "@/lib/background-removal-shared";
 
 const SETTINGS_ID = "singleton";
 const MAX_LOGO_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -99,6 +100,42 @@ export async function setWorkspacePublicUrl(url: string | null) {
     where: { id: SETTINGS_ID },
     update: { publicUrl: normalized },
     create: { id: SETTINGS_ID, publicUrl: normalized },
+  });
+
+  revalidatePath("/settings");
+}
+
+/**
+ * Deliberately omits the raw API key — see src/lib/background-removal-settings.ts
+ * for the internal (non-action) helper that actually reads it for use.
+ */
+export async function getWorkspaceBgRemoval(): Promise<{
+  provider: BgRemovalProvider;
+  hasApiKey: boolean;
+}> {
+  const settings = await prisma.workspaceSettings.findUnique({ where: { id: SETTINGS_ID } });
+  const provider: BgRemovalProvider = isBgRemovalProvider(settings?.bgRemovalProvider)
+    ? settings.bgRemovalProvider
+    : "local";
+  return { provider, hasApiKey: Boolean(settings?.bgRemovalApiKey) };
+}
+
+export async function setWorkspaceBgRemoval(input: { provider: string; apiKey?: string | null }) {
+  await requirePermission("settings:manage");
+  if (!isBgRemovalProvider(input.provider)) {
+    throw new Error("Invalid background-removal provider.");
+  }
+
+  const existing = await prisma.workspaceSettings.findUnique({ where: { id: SETTINGS_ID } });
+  const nextApiKey = input.apiKey !== undefined ? input.apiKey : (existing?.bgRemovalApiKey ?? null);
+  if (input.provider !== "local" && !nextApiKey) {
+    throw new Error("Enter an API key for this provider.");
+  }
+
+  await prisma.workspaceSettings.upsert({
+    where: { id: SETTINGS_ID },
+    update: { bgRemovalProvider: input.provider, bgRemovalApiKey: nextApiKey },
+    create: { id: SETTINGS_ID, bgRemovalProvider: input.provider, bgRemovalApiKey: nextApiKey },
   });
 
   revalidatePath("/settings");

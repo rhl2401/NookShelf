@@ -9,6 +9,7 @@ import { PictureSizeControl } from "@/components/settings/picture-size-control";
 import { BackgroundShadeControl } from "@/components/settings/background-shade-control";
 import { BrandingForm } from "@/components/settings/branding-form";
 import { PublicUrlControl } from "@/components/settings/public-url-control";
+import { BgRemovalControl } from "@/components/settings/bg-removal-control";
 import { WorkspaceBadge } from "@/components/settings/workspace-badge";
 import { getDefaultCurrency, currencyLabel } from "@/lib/currency";
 import { DataIoCard } from "@/components/settings/data-io-card";
@@ -16,17 +17,19 @@ import {
   getWorkspacePictureSize,
   getWorkspaceBranding,
   getWorkspacePublicUrl,
+  getWorkspaceBgRemoval,
 } from "@/lib/actions/workspace-settings";
 
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user.permissions.includes("settings:manage")) redirect("/dashboard");
 
-  const [webhooks, pictureSize, branding, publicUrl] = await Promise.all([
+  const [webhooks, pictureSize, branding, publicUrl, bgRemoval] = await Promise.all([
     prisma.webhookEndpoint.findMany(),
     getWorkspacePictureSize(),
     getWorkspaceBranding(),
     getWorkspacePublicUrl(),
+    getWorkspaceBgRemoval(),
   ]);
 
   const providers = [
@@ -143,6 +146,17 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <PictureSizeControl pictureSize={pictureSize} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            Background removal <WorkspaceBadge />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BgRemovalControl provider={bgRemoval.provider} hasApiKey={bgRemoval.hasApiKey} />
         </CardContent>
       </Card>
 
