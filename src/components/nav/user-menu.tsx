@@ -83,7 +83,6 @@ export function UserMenu({
           personId={profile.personId}
           name={user.name ?? ""}
           hasAvatar={profile.hasAvatar}
-          oauthImage={user.image}
           emailNotificationsEnabled={profile.emailNotificationsEnabled}
           backgroundShade={profile.backgroundShade}
         />

@@ -60,11 +60,7 @@ export default async function PeoplePage() {
               <CardContent className="flex items-center gap-4">
                 <Avatar size="lg">
                   <AvatarImage
-                    src={
-                      person.avatarPath
-                        ? `/api/avatars/${person.id}`
-                        : (person.user?.image ?? undefined)
-                    }
+                    src={person.avatarPath ? `/api/avatars/${person.id}` : undefined}
                     alt={person.name}
                   />
                   <AvatarFallback>{initials}</AvatarFallback>
@@ -95,7 +91,6 @@ export default async function PeoplePage() {
                       personId={person.id}
                       personName={person.name}
                       hasAvatar={Boolean(person.avatarPath)}
-                      oauthImage={person.user?.image}
                     />
                     <EditRolesDialog
                       personId={person.id}

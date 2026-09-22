@@ -4,6 +4,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
 import { ensurePersonForUser } from "@/lib/person-bootstrap";
+import { syncAvatarFromOAuthIfMissing } from "@/lib/avatar-sync";
 import { isDevLoginEnabled, findOrCreateDevUser } from "@/lib/dev-login";
 
 const devLoginProvider = Credentials({
@@ -37,6 +38,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async createUser({ user }) {
       if (!user.id) return;
       await ensurePersonForUser({ id: user.id, email: user.email ?? null, name: user.name ?? null });
+    },
+    // Fires on every sign-in, after createUser/linkAccount — covers both a
+    // brand-new account's first login and an existing person who never had a
+    // picture synced (e.g. they set one on their identity provider after
+    // their first login here, or a previous sync attempt failed).
+    async signIn({ user }) {
+      if (user.id) await syncAvatarFromOAuthIfMissing(user.id, user.image);
     },
   },
   callbacks: {

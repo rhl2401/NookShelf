@@ -1,24 +1,24 @@
 "use client";
 
-import { useRef, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { uploadAvatar, removeAvatar } from "@/lib/actions/people";
+import { AvatarCropDialog } from "@/components/settings/avatar-crop-dialog";
 
 export function AvatarUploader({
   personId,
   name,
   hasAvatar,
-  oauthImage,
 }: {
   personId: string;
   name: string;
   hasAvatar: boolean;
-  oauthImage?: string | null;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -35,9 +35,18 @@ export function AvatarUploader({
 
   function onFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = "";
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
+    setPendingFile(file);
+  }
+
+  function uploadCropped(cropped: File) {
     const formData = new FormData();
-    formData.set("file", file);
+    formData.set("file", cropped);
     startTransition(async () => {
       try {
         await uploadAvatar(personId, formData);
@@ -45,8 +54,6 @@ export function AvatarUploader({
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Upload failed");
-      } finally {
-        if (fileInputRef.current) fileInputRef.current.value = "";
       }
     });
   }
@@ -66,10 +73,7 @@ export function AvatarUploader({
   return (
     <div className="flex items-center gap-4">
       <Avatar size="lg" className="size-16">
-        <AvatarImage
-          src={hasAvatar ? `/api/avatars/${personId}` : (oauthImage ?? undefined)}
-          alt={name}
-        />
+        <AvatarImage src={hasAvatar ? `/api/avatars/${personId}` : undefined} alt={name} />
         <AvatarFallback className="text-base">{initials}</AvatarFallback>
       </Avatar>
       <div className="flex items-center gap-2">
@@ -95,6 +99,12 @@ export function AvatarUploader({
           </Button>
         )}
       </div>
+
+      <AvatarCropDialog
+        file={pendingFile}
+        onClose={() => setPendingFile(null)}
+        onCropped={uploadCropped}
+      />
     </div>
   );
 }
