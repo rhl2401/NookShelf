@@ -21,7 +21,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       : null,
     getWorkspaceBranding(),
   ]);
-  const image = person?.avatarPath ? `/api/avatars/${session.user.personId}` : session.user.image;
+  // Never falls back to session.user.image (the raw OAuth provider URL) — the
+  // app's CSP (img-src 'self' blob: data:) blocks it from ever rendering
+  // anyway, and syncAvatarFromOAuthIfMissing (src/auth.ts, on every sign-in)
+  // already downloads it into avatarPath as soon as one's available.
+  const image = person?.avatarPath ? `/api/avatars/${session.user.personId}` : null;
   const appName = branding.appName ?? DEFAULT_APP_NAME;
   const logoUrl = branding.hasLogo ? `/api/branding/logo?v=${branding.updatedAt?.getTime()}` : null;
   const profile =

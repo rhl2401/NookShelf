@@ -25,7 +25,6 @@ export function ProfileSettingsDialog({
   personId,
   name,
   hasAvatar,
-  oauthImage,
   emailNotificationsEnabled,
   backgroundShade,
 }: {
@@ -34,7 +33,6 @@ export function ProfileSettingsDialog({
   personId: string;
   name: string;
   hasAvatar: boolean;
-  oauthImage?: string | null;
   emailNotificationsEnabled: boolean;
   backgroundShade: BackgroundShadeKey | null;
 }) {
@@ -69,7 +67,6 @@ export function ProfileSettingsDialog({
               personId={personId}
               name={name}
               hasAvatar={hasAvatar}
-              oauthImage={oauthImage}
             />
           </div>
           <div className="grid gap-1.5">

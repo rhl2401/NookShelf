@@ -8,6 +8,7 @@ import { WebhookRowActions } from "@/components/settings/webhook-row-actions";
 import { PictureSizeControl } from "@/components/settings/picture-size-control";
 import { BackgroundShadeControl } from "@/components/settings/background-shade-control";
 import { BrandingForm } from "@/components/settings/branding-form";
+import { SignInBackgroundControl } from "@/components/settings/sign-in-background-control";
 import { PublicUrlControl } from "@/components/settings/public-url-control";
 import { BgRemovalControl } from "@/components/settings/bg-removal-control";
 import { WorkspaceBadge } from "@/components/settings/workspace-badge";
@@ -63,6 +64,20 @@ export default async function SettingsPage() {
             color={branding.color}
             signInHeadline={branding.signInHeadline}
             signInSubtitle={branding.signInSubtitle}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            Sign-in background <WorkspaceBadge />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SignInBackgroundControl
+            hasBackground={branding.hasSignInBackground}
+            updatedAt={branding.updatedAt}
           />
         </CardContent>
       </Card>

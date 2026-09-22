@@ -1,7 +1,7 @@
 import "server-only";
 import sharp from "sharp";
 import { THUMB_SIZE } from "@/lib/picture-size";
-import { MAX_LOGO_DIMENSION } from "@/lib/branding-shared";
+import { MAX_LOGO_DIMENSION, MAX_SIGNIN_BACKGROUND_DIMENSION } from "@/lib/branding-shared";
 
 export const AVATAR_SIZE = 256;
 const WEBP_QUALITY = 82;
@@ -71,4 +71,29 @@ export async function processLogoUpload(
   const buffer = await resized.toBuffer();
   const { width, height } = await sharp(buffer).metadata();
   return { buffer, width: width ?? MAX_LOGO_DIMENSION, height: height ?? MAX_LOGO_DIMENSION };
+}
+
+/**
+ * Downscales to fit within a bounding box without cropping or forcing a
+ * square, and re-encodes as webp — used for the sign-in page's full-screen
+ * background photo, rendered client-side with CSS background-size: cover,
+ * so the source aspect ratio doesn't matter here.
+ */
+export async function processSignInBackgroundUpload(
+  input: Buffer,
+): Promise<{ buffer: Buffer; width: number; height: number }> {
+  const resized = sharp(input)
+    .rotate()
+    .resize(MAX_SIGNIN_BACKGROUND_DIMENSION, MAX_SIGNIN_BACKGROUND_DIMENSION, {
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .webp({ quality: WEBP_QUALITY });
+  const buffer = await resized.toBuffer();
+  const { width, height } = await sharp(buffer).metadata();
+  return {
+    buffer,
+    width: width ?? MAX_SIGNIN_BACKGROUND_DIMENSION,
+    height: height ?? MAX_SIGNIN_BACKGROUND_DIMENSION,
+  };
 }

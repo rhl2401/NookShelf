@@ -61,6 +61,13 @@ export async function saveLogoFile(buffer: Buffer) {
   return relativePath;
 }
 
+/** Saves a processed sign-in background buffer under uploads/branding/, returning the relative path stored on WorkspaceSettings.signInBackgroundPath. */
+export async function saveSignInBackgroundFile(buffer: Buffer) {
+  const relativePath = `branding/${crypto.randomUUID()}.webp`;
+  await writeStoredFile(relativePath, buffer, "image/webp");
+  return relativePath;
+}
+
 export async function deleteStoredFile(relativePath: string) {
   try {
     if (isS3Enabled()) {

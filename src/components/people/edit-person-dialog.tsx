@@ -22,12 +22,10 @@ export function EditPersonDialog({
   personId,
   personName,
   hasAvatar,
-  oauthImage,
 }: {
   personId: string;
   personName: string;
   hasAvatar: boolean;
-  oauthImage?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(personName);
@@ -71,7 +69,6 @@ export function EditPersonDialog({
               personId={personId}
               name={personName}
               hasAvatar={hasAvatar}
-              oauthImage={oauthImage}
             />
           </div>
         </div>
