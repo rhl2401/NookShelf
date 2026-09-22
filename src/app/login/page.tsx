@@ -15,6 +15,7 @@ import {
 } from "@/lib/branding-shared";
 import { AssetTypeIcon } from "@/components/asset-type-icon";
 import { TriangleAlert } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Mirrors Auth.js's own built-in wording (@auth/core/lib/pages/signin.js) —
 // deliberately generic. The real reason (provider error code/description) is
@@ -76,6 +77,9 @@ export default async function LoginPage({
   const subtitle = branding.signInSubtitle ?? DEFAULT_SIGN_IN_SUBTITLE;
   const logoUrl = branding.hasLogo ? `/api/branding/logo?v=${branding.updatedAt?.getTime()}` : null;
   const isUnbranded = !branding.appName && !branding.signInHeadline && !logoUrl && !branding.icon;
+  const backgroundUrl = branding.hasSignInBackground
+    ? `/api/branding/sign-in-background?v=${branding.updatedAt?.getTime()}`
+    : null;
 
   const people = devLoginEnabled
     ? await prisma.person.findMany({
@@ -86,8 +90,23 @@ export default async function LoginPage({
     : [];
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 p-6">
-      <div className="w-full max-w-sm space-y-8">
+    <div
+      className={cn(
+        "flex min-h-screen w-full items-center justify-center p-6",
+        backgroundUrl ? "bg-cover bg-center" : "bg-muted/40",
+      )}
+      style={backgroundUrl ? { backgroundImage: `url(${backgroundUrl})` } : undefined}
+    >
+      <div
+        className={cn(
+          "w-full max-w-sm space-y-8",
+          // Default (no background set) stays exactly as before — plain,
+          // unboxed content on the page's own muted background. Once a
+          // background photo is set, the form moves into a centered card so
+          // it stays legible over an arbitrary image.
+          backgroundUrl && "rounded-xl border bg-background/95 p-8 shadow-lg backdrop-blur-sm",
+        )}
+      >
         <div className="flex flex-col items-center gap-2 text-center">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

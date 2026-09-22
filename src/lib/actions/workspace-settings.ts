@@ -4,14 +4,15 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth-helpers";
 import { PICTURE_SIZE_OPTIONS, DEFAULT_PICTURE_SIZE } from "@/lib/picture-size";
-import { processLogoUpload } from "@/lib/image-processing";
-import { saveLogoFile, deleteStoredFile } from "@/lib/storage";
+import { processLogoUpload, processSignInBackgroundUpload } from "@/lib/image-processing";
+import { saveLogoFile, saveSignInBackgroundFile, deleteStoredFile } from "@/lib/storage";
 import { isValidHexColor } from "@/lib/color-shared";
 import { DEFAULT_BACKGROUND_SHADE, isBackgroundShadeKey } from "@/lib/background-shades";
 import { isBgRemovalProvider, type BgRemovalProvider } from "@/lib/background-removal-shared";
 
 const SETTINGS_ID = "singleton";
 const MAX_LOGO_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_SIGNIN_BACKGROUND_UPLOAD_BYTES = 15 * 1024 * 1024;
 
 export async function getWorkspacePictureSize(): Promise<number> {
   const settings = await prisma.workspaceSettings.findUnique({ where: { id: SETTINGS_ID } });
@@ -49,6 +50,7 @@ export async function getWorkspaceBranding() {
     color: settings?.color ?? null,
     signInHeadline: settings?.signInHeadline ?? null,
     signInSubtitle: settings?.signInSubtitle ?? null,
+    hasSignInBackground: Boolean(settings?.signInBackgroundPath),
     defaultBackgroundShade: isBackgroundShadeKey(settings?.defaultBackgroundShade)
       ? settings.defaultBackgroundShade
       : DEFAULT_BACKGROUND_SHADE,
@@ -232,6 +234,43 @@ export async function removeLogo() {
     data: { logoPath: null, logoSizeBytes: null },
   });
   await deleteStoredFile(settings.logoPath);
+
+  revalidateBranding();
+}
+
+export async function uploadSignInBackground(formData: FormData) {
+  await requirePermission("settings:manage");
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) throw new Error("No file provided.");
+  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+  if (file.size > MAX_SIGNIN_BACKGROUND_UPLOAD_BYTES) throw new Error("File is too large (max 15MB).");
+
+  const before = await prisma.workspaceSettings.findUnique({ where: { id: SETTINGS_ID } });
+  const input = Buffer.from(await file.arrayBuffer());
+  const { buffer } = await processSignInBackgroundUpload(input);
+  const relativePath = await saveSignInBackgroundFile(buffer);
+
+  await prisma.workspaceSettings.upsert({
+    where: { id: SETTINGS_ID },
+    update: { signInBackgroundPath: relativePath, signInBackgroundSizeBytes: buffer.byteLength },
+    create: { id: SETTINGS_ID, signInBackgroundPath: relativePath, signInBackgroundSizeBytes: buffer.byteLength },
+  });
+  if (before?.signInBackgroundPath) await deleteStoredFile(before.signInBackgroundPath);
+
+  revalidateBranding();
+}
+
+export async function removeSignInBackground() {
+  await requirePermission("settings:manage");
+  const settings = await prisma.workspaceSettings.findUnique({ where: { id: SETTINGS_ID } });
+  if (!settings?.signInBackgroundPath) return;
+
+  await prisma.workspaceSettings.update({
+    where: { id: SETTINGS_ID },
+    data: { signInBackgroundPath: null, signInBackgroundSizeBytes: null },
+  });
+  await deleteStoredFile(settings.signInBackgroundPath);
 
   revalidateBranding();
 }

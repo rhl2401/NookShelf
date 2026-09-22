@@ -388,6 +388,13 @@ model WorkspaceSettings {
   color          String?
   signInHeadline String?
   signInSubtitle String?
+  // Full-screen photo behind the sign-in form (Settings → Branding). Aspect
+  // ratio preserved, not cropped — rendered with CSS background-size: cover.
+  // Null (default) keeps today's plain background, with the form content NOT
+  // boxed; once set, the form renders inside a centered card so it stays
+  // legible over an arbitrary photo.
+  signInBackgroundPath      String?
+  signInBackgroundSizeBytes Int?
 
   // Workspace-wide default for Person.backgroundShade — one of BackgroundShadeKey
   // (src/lib/background-shades.ts). Individual people can override their own.
