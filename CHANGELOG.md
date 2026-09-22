@@ -8,6 +8,22 @@ do by hand beyond the normal upgrade steps.
 Upgrading? Read [README.md § Upgrading an existing instance](README.md#upgrading-an-existing-instance)
 first — always back up before pulling a new version.
 
+## 1.18.0
+
+- Uploading a profile picture now shows a crop step (drag to reposition, zoom slider, locked to
+  1:1) instead of just letterboxing whatever aspect ratio you picked onto a padded square.
+- Signing in via an OAuth/OIDC provider (Google, Microsoft, or a generic provider like Pocket ID)
+  now downloads that provider's profile picture and uses it as your avatar automatically, if you
+  don't already have one. Previously it was never actually downloaded — the raw provider URL was
+  sent to the browser directly and silently blocked by this app's own security policy, so no
+  provider's picture ever showed up. Existing accounts pick this up automatically on their next
+  sign-in.
+- Added a **Sign-in background** workspace setting (Settings → Sign-in background) — a full-screen
+  photo shown behind the sign-in form, which moves into a centered card once one is set. Defaults
+  to none (today's plain background, unchanged).
+- No breaking changes. New nullable columns only (`WorkspaceSettings.signInBackgroundPath`,
+  `WorkspaceSettings.signInBackgroundSizeBytes`) — no manual steps.
+
 ## 1.17.0
 
 - Added optional background removal for the picture library. Picking a new picture (a file or a
